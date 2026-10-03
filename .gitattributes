@@ -1,0 +1,36 @@
+# Line endings are decided here, in the repo, so both developers' machines and the
+# Linux containers behave identically regardless of local git settings.
+
+# Everything git detects as text: stored and checked out with LF.
+* text=auto eol=lf
+
+# Files that must be LF or they break at runtime on Linux.
+*.sh text eol=lf
+*.bash text eol=lf
+Dockerfile text eol=lf
+*.Dockerfile text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Windows-only scripts keep CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binaries: never convert anything inside them.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.joblib binary
+*.pkl binary
+*.npz binary
+*.parquet binary
+*.xlsx binary
+
+# Notebooks are JSON; treat as text but suppress diff noise from output cells.
+*.ipynb text eol=lf
