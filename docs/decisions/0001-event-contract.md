@@ -1,7 +1,7 @@
 # 0001 — The event contract
 
 **Status:** Accepted, 2026-10-03
-**Decided by:** Person A(FOR NOW)
+**Decided by:** Person A and B
 **Affects:** `core/api`, `core/data`, both connectors — every component in the system
 
 ## Context

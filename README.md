@@ -26,22 +26,72 @@ store (Shopify / WooCommerce)
 entirely by `connectors/`, which translate platform data into the standard event format
 and call the core API like any other client. See [CLAUDE.md](CLAUDE.md).
 
-### Event contract (placeholder — not finalised)
+### Event contract
 
-Everything will depend on this. All connectors produce it; the core service accepts
-nothing else. The shape below is a starting point, not a decision — settle it jointly
-before either half builds against it, and record the outcome in `docs/decisions/`.
+Everything depends on this. All connectors produce it; the core service accepts nothing
+else. Agreed in [docs/decisions/0001-event-contract.md](docs/decisions/0001-event-contract.md),
+which records why each field is there.
 
 ```json
 {
+  "event_id": "string, optional — connector-generated, for idempotency",
   "user_id": "string",
   "item_id": "string",
   "event_type": "view" | "cart" | "purchase",
-  "timestamp": "ISO 8601"
+  "order_id": "string, optional — groups a multi-item purchase",
+  "timestamp": "ISO 8601, UTC offset required"
 }
 ```
 
-`user_id` is an anonymous identifier, never a name or email.
+```http
+POST /v1/events
+Authorization: Bearer <store api key>
+
+[ { "user_id": "v-8812", "item_id": "123", "event_type": "view",
+    "timestamp": "2026-10-03T09:14:22Z" } ]
+```
+
+Rules a connector must honour:
+
+- **The store is never named in the payload.** The connector authenticates with an API
+  key; the server resolves key → store and tags every event itself. A connector
+  therefore cannot write into another store's data, and `item_id` cannot collide
+  between stores.
+- `user_id` is an anonymous identifier, never a name or email — and it must be **stable
+  across all event types** from that connector. A platform that identifies browsers and
+  buyers differently (Shopify does) must reconcile them in the connector, or user
+  histories break at the purchase.
+- `item_id` is the **product**, not the variant. Connectors collapse size/colour
+  variants onto the product.
+- A repeated `event_id` is discarded and the response is still a success. Webhooks
+  retry on any non-2xx, so rejecting a duplicate with an error causes a retry loop.
+- `order_id` appears only on `purchase` events.
+- Ingestion always takes an array, even for a single event — the same path serves the
+  dataset backfill and live webhooks.
+- Unknown fields are ignored, so a field can be added without breaking a deployed
+  connector.
+
+The server records its own `received_at` in addition to `timestamp`. Evaluation uses
+`timestamp`; `received_at` exists to detect store clock drift, which would otherwise
+corrupt time-based splits invisibly.
+
+### Where events come from
+
+Neither platform delivers all three event types through one mechanism.
+
+| Event      | Shopify                        | WooCommerce                      |
+| ---------- | ------------------------------ | -------------------------------- |
+| `view`     | Web Pixel (browser)            | plugin hook (server)             |
+| `cart`     | Web Pixel, or cart webhook¹    | `woocommerce_add_to_cart`        |
+| `purchase` | `orders/create` webhook        | `woocommerce_thankyou` / webhook |
+
+¹ Cart webhooks deliver whole cart state, so the connector must diff to find what was
+added.
+
+Shopify has no view webhook — browsing never reaches its backend in a subscribable
+form, so views require client-side code. WooCommerce runs inside the site and can
+capture all three server-side, but its REST webhooks dispatch via WP-Cron and so arrive
+late on low-traffic stores.
 
 ## Layout
 
