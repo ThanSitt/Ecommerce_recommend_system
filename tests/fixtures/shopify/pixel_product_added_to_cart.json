@@ -1,0 +1,92 @@
+{
+  "id": "sh-0e855d35-DE35-4C26-C5D5-6AE11BD7FEDB",
+  "name": "product_added_to_cart",
+  "data": {
+    "cartLine": {
+      "cost": {
+        "totalAmount": {
+          "amount": 50,
+          "currencyCode": "EUR"
+        }
+      },
+      "merchandise": {
+        "id": "44906800480429",
+        "image": {
+          "src": "https://cdn.shopify.com/s/files/1/0651/6313/3101/files/red-plaid-shirt_925x_e4288652-9cfd-4fe3-8dbb-797a3d30ea3c.jpg?v=1757764556"
+        },
+        "price": {
+          "amount": 50,
+          "currencyCode": "EUR"
+        },
+        "product": {
+          "id": "8313705300141",
+          "title": "Chequered Red Shirt",
+          "vendor": "partners-demo",
+          "type": "",
+          "untranslatedTitle": "Chequered Red Shirt",
+          "url": "/products/chequered-red-shirt?variant=44906800480429"
+        },
+        "sku": null,
+        "title": null,
+        "untranslatedTitle": null
+      },
+      "quantity": 1
+    }
+  },
+  "type": "standard",
+  "timestamp": "2026-10-06T00:02:57.421Z",
+  "context": {
+    "document": {
+      "location": {
+        "href": "https://quickstart-8fcf1cb8.myshopify.com/products/chequered-red-shirt",
+        "hash": "",
+        "host": "quickstart-8fcf1cb8.myshopify.com",
+        "hostname": "quickstart-8fcf1cb8.myshopify.com",
+        "origin": "https://quickstart-8fcf1cb8.myshopify.com",
+        "pathname": "/products/chequered-red-shirt",
+        "port": "",
+        "protocol": "https:",
+        "search": ""
+      },
+      "referrer": "https://quickstart-8fcf1cb8.myshopify.com/collections/all",
+      "characterSet": "UTF-8",
+      "title": "Chequered Red Shirt – FirstStore"
+    },
+    "navigator": {
+      "language": "tr-TR",
+      "cookieEnabled": true,
+      "languages": ["tr-TR", "en-TR", "tr", "en-US", "en"],
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"
+    },
+    "window": {
+      "innerHeight": 911,
+      "innerWidth": 1920,
+      "outerHeight": 1032,
+      "outerWidth": 1920,
+      "pageXOffset": 0,
+      "pageYOffset": 0,
+      "location": {
+        "href": "https://quickstart-8fcf1cb8.myshopify.com/products/chequered-red-shirt",
+        "hash": "",
+        "host": "quickstart-8fcf1cb8.myshopify.com",
+        "hostname": "quickstart-8fcf1cb8.myshopify.com",
+        "origin": "https://quickstart-8fcf1cb8.myshopify.com",
+        "pathname": "/products/chequered-red-shirt",
+        "port": "",
+        "protocol": "https:",
+        "search": ""
+      },
+      "origin": "https://quickstart-8fcf1cb8.myshopify.com",
+      "screen": {
+        "height": 1080,
+        "width": 1920
+      },
+      "screenX": 0,
+      "screenY": 0,
+      "scrollX": 0,
+      "scrollY": 0
+    }
+  },
+  "seq": 1,
+  "clientId": "6dce103d-b085-4ec9-9f84-3c937440e610"
+}
