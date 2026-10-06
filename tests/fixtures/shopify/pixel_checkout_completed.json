@@ -1,0 +1,280 @@
+{
+  "id": "fa08318c-3cf6-45cb-bcb8-02fbb97adb02",
+  "name": "checkout_completed",
+  "data": {
+    "checkout": {
+      "buyerAcceptsEmailMarketing": false,
+      "buyerAcceptsSmsMarketing": false,
+      "attributes": [],
+      "billingAddress": {
+        "address1": "asdsad",
+        "address2": null,
+        "city": "oeoe",
+        "country": "FI",
+        "countryCode": "FI",
+        "firstName": null,
+        "lastName": "asdasd",
+        "phone": null,
+        "province": null,
+        "provinceCode": null,
+        "zip": "90100"
+      },
+      "token": "2e872ed34ad47d4813f57e021983f0b6",
+      "currencyCode": "EUR",
+      "discountApplications": [],
+      "discountsAmount": {
+        "amount": 0,
+        "currencyCode": "EUR"
+      },
+      "email": "test-buyer@example.com",
+      "phone": null,
+      "lineItems": [
+        {
+          "discountAllocations": [],
+          "id": "44906800480429",
+          "quantity": 2,
+          "title": "Chequered Red Shirt",
+          "variant": {
+            "id": "44906800480429",
+            "image": {
+              "src": "https://cdn.shopify.com/s/files/1/0651/6313/3101/files/red-plaid-shirt_925x_e4288652-9cfd-4fe3-8dbb-797a3d30ea3c.jpg?v=1757764556"
+            },
+            "price": {
+              "amount": 50,
+              "currencyCode": "EUR"
+            },
+            "product": {
+              "id": "8313705300141",
+              "title": "Chequered Red Shirt",
+              "vendor": "partners-demo",
+              "type": "",
+              "untranslatedTitle": "Chequered Red Shirt",
+              "url": "/products/chequered-red-shirt"
+            },
+            "sku": null,
+            "title": null,
+            "untranslatedTitle": ""
+          },
+          "finalLinePrice": {
+            "amount": 100,
+            "currencyCode": "EUR"
+          },
+          "sellingPlanAllocation": null,
+          "properties": [],
+          "lineComponents": []
+        },
+        {
+          "discountAllocations": [],
+          "id": "44906800349357",
+          "quantity": 1,
+          "title": "Black Leather Bag",
+          "variant": {
+            "id": "44906800349357",
+            "image": {
+              "src": "https://cdn.shopify.com/s/files/1/0651/6313/3101/files/black-bag-over-the-shoulder_925x_271ca3e5-cd1b-47fc-82a4-9e8d9bac3b83.jpg?v=1757764552"
+            },
+            "price": {
+              "amount": 30,
+              "currencyCode": "EUR"
+            },
+            "product": {
+              "id": "8313705169069",
+              "title": "Black Leather Bag",
+              "vendor": "partners-demo",
+              "type": "",
+              "untranslatedTitle": "Black Leather Bag",
+              "url": "/products/black-leather-bag"
+            },
+            "sku": null,
+            "title": null,
+            "untranslatedTitle": ""
+          },
+          "finalLinePrice": {
+            "amount": 30,
+            "currencyCode": "EUR"
+          },
+          "sellingPlanAllocation": null,
+          "properties": [],
+          "lineComponents": []
+        },
+        {
+          "discountAllocations": [],
+          "id": "44906800578733",
+          "quantity": 1,
+          "title": "Blue Silk Tuxedo",
+          "variant": {
+            "id": "44906800578733",
+            "image": {
+              "src": "https://cdn.shopify.com/s/files/1/0651/6313/3101/files/man-adjusts-blue-tuxedo-bowtie_925x_5538c58a-cc44-4dae-846b-a688414170aa.jpg?v=1757764559"
+            },
+            "price": {
+              "amount": 70,
+              "currencyCode": "EUR"
+            },
+            "product": {
+              "id": "8313705398445",
+              "title": "Blue Silk Tuxedo",
+              "vendor": "partners-demo",
+              "type": "",
+              "untranslatedTitle": "Blue Silk Tuxedo",
+              "url": "/products/blue-silk-tuxedo"
+            },
+            "sku": null,
+            "title": null,
+            "untranslatedTitle": ""
+          },
+          "finalLinePrice": {
+            "amount": 70,
+            "currencyCode": "EUR"
+          },
+          "sellingPlanAllocation": null,
+          "properties": [],
+          "lineComponents": []
+        }
+      ],
+      "localization": {
+        "country": {
+          "isoCode": "FI"
+        },
+        "language": {
+          "isoCode": "en-FI"
+        },
+        "market": {
+          "id": "gid://shopify/Market/27997536429",
+          "handle": "fi"
+        }
+      },
+      "order": {
+        "id": "18804001407149",
+        "customer": {
+          "id": "10359412687021",
+          "isFirstOrder": true
+        }
+      },
+      "delivery": {
+        "selectedDeliveryOptions": [
+          {
+            "cost": {
+              "amount": 18,
+              "currencyCode": "EUR"
+            },
+            "costAfterDiscounts": {
+              "amount": 18,
+              "currencyCode": "EUR"
+            },
+            "description": null,
+            "handle": "2e872ed34ad47d4813f57e021983f0b6-108eed6330d42c9e5e1ef7e390098769",
+            "title": "Standard",
+            "type": "shipping",
+            "targetLineItems": [
+              "44906800480429",
+              "44906800349357",
+              "44906800578733"
+            ]
+          }
+        ]
+      },
+      "shippingAddress": {
+        "address1": "asdsad",
+        "address2": null,
+        "city": "oeoe",
+        "country": "FI",
+        "countryCode": "FI",
+        "firstName": null,
+        "lastName": "asdasd",
+        "phone": null,
+        "province": null,
+        "provinceCode": null,
+        "zip": "90100"
+      },
+      "subtotalPrice": {
+        "amount": 200,
+        "currencyCode": "EUR"
+      },
+      "shippingLine": {
+        "price": {
+          "amount": 18,
+          "currencyCode": "EUR"
+        }
+      },
+      "smsMarketingPhone": null,
+      "totalTax": {
+        "amount": 0,
+        "currencyCode": "EUR"
+      },
+      "totalPrice": {
+        "amount": 218,
+        "currencyCode": "EUR"
+      },
+      "transactions": [
+        {
+          "amount": {
+            "amount": 218,
+            "currencyCode": "EUR"
+          },
+          "gateway": "bogus",
+          "paymentMethod": {
+            "type": "creditCard",
+            "name": "BOGUS"
+          }
+        }
+      ]
+    }
+  },
+  "type": "standard",
+  "timestamp": "2026-10-06T00:15:09.606Z",
+  "context": {
+    "document": {
+      "location": {
+        "href": "https://quickstart-8fcf1cb8.myshopify.com/checkouts/cn/hWNHdYSecKR7UV9zeY2Vs3Yv/en-fi/thank-you?_r=AQABXtF9hCwEX6GEXm1TwnU96fTg0SN9_7vcK150HXKrMVHOTJ7f",
+        "hash": "",
+        "host": "quickstart-8fcf1cb8.myshopify.com",
+        "hostname": "quickstart-8fcf1cb8.myshopify.com",
+        "origin": "https://quickstart-8fcf1cb8.myshopify.com",
+        "pathname": "/checkouts/cn/hWNHdYSecKR7UV9zeY2Vs3Yv/en-fi/thank-you",
+        "port": "",
+        "protocol": "https:",
+        "search": "?_r=AQABXtF9hCwEX6GEXm1TwnU96fTg0SN9_7vcK150HXKrMVHOTJ7f"
+      },
+      "referrer": "https://quickstart-8fcf1cb8.myshopify.com/products/chequered-red-shirt",
+      "characterSet": "UTF-8",
+      "title": "Checkout - FirstStore"
+    },
+    "navigator": {
+      "language": "tr-TR",
+      "cookieEnabled": true,
+      "languages": ["tr-TR", "en-TR", "tr", "en-US", "en"],
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"
+    },
+    "window": {
+      "innerHeight": 911,
+      "innerWidth": 1920,
+      "outerHeight": 1032,
+      "outerWidth": 1920,
+      "pageXOffset": 0,
+      "pageYOffset": 600,
+      "location": {
+        "href": "https://quickstart-8fcf1cb8.myshopify.com/checkouts/cn/hWNHdYSecKR7UV9zeY2Vs3Yv/en-fi/thank-you?_r=AQABXtF9hCwEX6GEXm1TwnU96fTg0SN9_7vcK150HXKrMVHOTJ7f",
+        "hash": "",
+        "host": "quickstart-8fcf1cb8.myshopify.com",
+        "hostname": "quickstart-8fcf1cb8.myshopify.com",
+        "origin": "https://quickstart-8fcf1cb8.myshopify.com",
+        "pathname": "/checkouts/cn/hWNHdYSecKR7UV9zeY2Vs3Yv/en-fi/thank-you",
+        "port": "",
+        "protocol": "https:",
+        "search": "?_r=AQABXtF9hCwEX6GEXm1TwnU96fTg0SN9_7vcK150HXKrMVHOTJ7f"
+      },
+      "origin": "https://quickstart-8fcf1cb8.myshopify.com",
+      "screen": {
+        "height": 1080,
+        "width": 1920
+      },
+      "screenX": 0,
+      "screenY": 600,
+      "scrollX": 0,
+      "scrollY": 600
+    }
+  },
+  "seq": 1,
+  "clientId": "6dce103d-b085-4ec9-9f84-3c937440e610"
+}

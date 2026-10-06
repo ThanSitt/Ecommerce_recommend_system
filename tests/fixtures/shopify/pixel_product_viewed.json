@@ -1,0 +1,83 @@
+{
+  "id": "sh-0e7ae0b5-1162-407E-307E-A93A03559637",
+  "name": "product_viewed",
+  "data": {
+    "productVariant": {
+      "price": {
+        "amount": 30,
+        "currencyCode": "EUR"
+      },
+      "product": {
+        "title": "Black Leather Bag",
+        "vendor": "partners-demo",
+        "id": "8313705169069",
+        "untranslatedTitle": "Black Leather Bag",
+        "url": "/products/black-leather-bag",
+        "type": ""
+      },
+      "id": "44906800349357",
+      "image": {
+        "src": "//quickstart-8fcf1cb8.myshopify.com/cdn/shop/files/black-bag-over-the-shoulder_925x_271ca3e5-cd1b-47fc-82a4-9e8d9bac3b83.jpg?v=1757764552"
+      },
+      "sku": null,
+      "title": "Default Title",
+      "untranslatedTitle": "Default Title"
+    }
+  },
+  "type": "standard",
+  "timestamp": "2026-10-05T23:51:35.903Z",
+  "context": {
+    "document": {
+      "location": {
+        "href": "https://quickstart-8fcf1cb8.myshopify.com/products/black-leather-bag",
+        "hash": "",
+        "host": "quickstart-8fcf1cb8.myshopify.com",
+        "hostname": "quickstart-8fcf1cb8.myshopify.com",
+        "origin": "https://quickstart-8fcf1cb8.myshopify.com",
+        "pathname": "/products/black-leather-bag",
+        "port": "",
+        "protocol": "https:",
+        "search": ""
+      },
+      "referrer": "https://quickstart-8fcf1cb8.myshopify.com/collections/all",
+      "characterSet": "UTF-8",
+      "title": "Black Leather Bag – FirstStore"
+    },
+    "navigator": {
+      "language": "tr-TR",
+      "cookieEnabled": true,
+      "languages": ["tr-TR", "en-TR", "tr", "en-US", "en"],
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"
+    },
+    "window": {
+      "innerHeight": 911,
+      "innerWidth": 1920,
+      "outerHeight": 1032,
+      "outerWidth": 1920,
+      "pageXOffset": 0,
+      "pageYOffset": 0,
+      "location": {
+        "href": "https://quickstart-8fcf1cb8.myshopify.com/products/black-leather-bag",
+        "hash": "",
+        "host": "quickstart-8fcf1cb8.myshopify.com",
+        "hostname": "quickstart-8fcf1cb8.myshopify.com",
+        "origin": "https://quickstart-8fcf1cb8.myshopify.com",
+        "pathname": "/products/black-leather-bag",
+        "port": "",
+        "protocol": "https:",
+        "search": ""
+      },
+      "origin": "https://quickstart-8fcf1cb8.myshopify.com",
+      "screen": {
+        "height": 1080,
+        "width": 1920
+      },
+      "screenX": 0,
+      "screenY": 0,
+      "scrollX": 0,
+      "scrollY": 0
+    }
+  },
+  "seq": 1,
+  "clientId": "6dce103d-b085-4ec9-9f84-3c937440e610"
+}
