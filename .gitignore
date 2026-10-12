@@ -1,11 +1,13 @@
 # Datasets and model artefacts are never committed (see CLAUDE.md, "Data rules").
 # See "Data setup" in README.md for how to obtain the data.
-data/raw/
-data/processed/
-models/
-!data/raw/.gitkeep
-!data/processed/.gitkeep
-!models/.gitkeep
+# Patterns are anchored with a leading "/" so they don't also match core/models/ or core/data/.
+# Contents (not the directories) are ignored so the .gitkeep re-includes can take effect.
+/data/raw/*
+/data/processed/*
+/models/*
+!/data/raw/.gitkeep
+!/data/processed/.gitkeep
+!/models/.gitkeep
 
 # No CSV anywhere, except the small committed test fixtures.
 *.csv
