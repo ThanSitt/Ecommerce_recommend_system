@@ -1,0 +1,7 @@
+# Runtime dependencies for the Shopify connector. Separate from the root
+# requirements.txt (the core's), because the connector is deployed on its own.
+
+fastapi>=0.115
+uvicorn[standard]>=0.32
+pydantic-settings>=2.6
+httpx>=0.28

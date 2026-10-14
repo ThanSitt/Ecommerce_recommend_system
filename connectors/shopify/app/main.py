@@ -10,17 +10,32 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Any
 
+import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from connectors.shopify.app.config import get_settings
+from connectors.shopify.app.core_client import send_events
 from connectors.shopify.app.transform import transform
 
 logger = logging.getLogger("shopify_connector")
 logging.basicConfig(level=logging.INFO)
 
-app = FastAPI(title="Shopify connector")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    # One HTTP client for the app's lifetime, so connections to the core are reused
+    # instead of opened and closed on every pixel event.
+    async with httpx.AsyncClient() as client:
+        app.state.core_client = client
+        yield
+
+
+app = FastAPI(title="Shopify connector", lifespan=lifespan)
 
 # The pixel runs in the shopper's browser on the store's domain, so its requests are
 # cross-origin. Without this the browser blocks them before they reach us.
@@ -48,7 +63,6 @@ async def receive_pixel_event(request: Request) -> dict[str, str]:
 
     events = transform(pixel_event)
 
-    # TODO: forward `events` to the core's POST /v1/events once it exists.
     logger.info(
         "pixel event received: %s -> %d contract event(s)\nproducts: %s\n%s",
         pixel_event.get("name"),
@@ -56,6 +70,7 @@ async def receive_pixel_event(request: Request) -> dict[str, str]:
         _debug_product_titles(pixel_event),
         json.dumps(events, indent=2),
     )
+    await send_events(request.app.state.core_client, get_settings(), events)
     return {"status": "received"}
 
 

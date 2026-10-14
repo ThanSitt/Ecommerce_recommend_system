@@ -141,11 +141,48 @@ Fixture: `tests/fixtures/shopify/pixel_checkout_completed.json` (email replaced 
 - `quantity: 2` on the shirt → still one `purchase` event (no quantity in contract, same as cart).
 - ⚠️ **This payload contains personal data**: email, billing and shipping address, phone, marketing consent. The connector must extract only the contract fields and **never forward or log the rest**. `customer.id` must not be used as `user_id` either (it identifies a real customer account; `clientId` is the anonymous one).
 
+**Shop identity — which store sent the event** — checked 2026-10-13 by logging the pixel's `init` object.
+
+The core resolves the store from the API key, so in production the connector must know which
+shop each pixel event comes from, to pick that shop's key. The event payloads themselves do not
+say this reliably: the shop appears only in `context.document.location.host` (the page address),
+which is the store's **custom domain** on a real store (e.g. `german-shoes.de`), not its Shopify
+address, and changes if the store changes domain.
+
+The pixel's `init` object does carry it:
+
+```json
+init.data.shop = {
+  "name": "FirstStore",
+  "paymentSettings": { "currencyCode": "EUR" },
+  "myshopifyDomain": "quickstart-8fcf1cb8.myshopify.com",
+  "countryCode": "FI",
+  "storefrontUrl": "https://quickstart-8fcf1cb8.myshopify.com"
+}
+```
+
+- ✅ **Use `myshopifyDomain`** as the shop identifier — Shopify's permanent address for the store.
+- ❌ Not `storefrontUrl` — equals `myshopifyDomain` here only because the dev store has no custom
+  domain; on a real store it is the custom domain.
+- ❌ Not `name` — the merchant can rename the store at any time.
+
+**Not implemented yet** (one dev store, one key in `.env`). When a second store is connected:
+
+1. The pixel sends `{ shop: init.data.shop.myshopifyDomain, event }` instead of the bare event.
+2. The connector keeps a `myshopifyDomain → core API key` mapping, created when a store installs
+   the app, and ignores events from unknown shops.
+3. The connector forwards to `POST /v1/events` with that shop's key.
+
+Limitation to note in the thesis: `/pixel` is public (browsers must reach it), so the `shop` value
+can be forged. This is inherent to client-side tracking; mitigations are rate limiting and checking
+the `Origin` header.
+
 Decisions to record next to the table:
 
 - [ ] `item_id` = product ID or variant ID? (Retailrocket items are product-level → probably product ID)
 - [ ] Do the IDs come as plain numbers (`1001`) or GIDs (`gid://shopify/Order/1001`)? Pick one form and normalise in the connector.
 - [ ] Option A, B or C for purchases?
+- [x] How does the connector know which shop an event came from? → `init.data.shop.myshopifyDomain` (see "Shop identity" above)
 
 ---
 
