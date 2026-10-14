@@ -12,21 +12,26 @@ from __future__ import annotations
 
 import secrets
 
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from core.config import Settings, get_settings
 
 DEV_STORE_ID = "dev"
 
+# Parses "Authorization: Bearer <key>" and declares it as a security scheme, which is what
+# gives /docs its "Authorize" button. auto_error=False so the 401 below is ours.
+_bearer = HTTPBearer(auto_error=False)
+
 
 def get_store_id(
-    authorization: str | None = Header(default=None),
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
     settings: Settings = Depends(get_settings),
 ) -> str:
     """FastAPI dependency: the store making this request, or 401."""
-    scheme, _, key = (authorization or "").partition(" ")
-    if scheme.lower() != "bearer" or not key:
+    if credentials is None:
         raise _unauthorized("missing or malformed Authorization header")
+    key = credentials.credentials
 
     valid_keys = [k.strip() for k in settings.core_api_keys.split(",") if k.strip()]
     # compare_digest takes the same time whether the key is almost right or totally

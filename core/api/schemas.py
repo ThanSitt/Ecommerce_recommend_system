@@ -30,3 +30,11 @@ class Event(BaseModel):
         if self.order_id is not None and self.event_type != "purchase":
             raise ValueError("order_id is only allowed on purchase events")
         return self
+
+
+class IngestResponse(BaseModel):
+    # Informational. Connectors should rely only on the 2xx status: if a queue is added
+    # in front of the database later, these counts are not known at response time.
+    received: int
+    inserted: int
+    duplicates: int
