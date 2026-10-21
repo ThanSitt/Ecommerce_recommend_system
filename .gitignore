@@ -46,6 +46,9 @@ htmlcov/
 .env.local
 *.pem
 
+# Personal working notes (roadmaps etc.), not shared
+/notes/
+
 # Node (Shopify app / storefront assets)
 node_modules/
 npm-debug.log*
