@@ -5,6 +5,7 @@ import math
 import pytest
 
 from core.evaluation.metrics import (
+    bootstrap_range,
     catalogue_coverage,
     ndcg_at_k,
     precision_at_k,
@@ -81,3 +82,27 @@ def test_a_repeated_item_is_a_bug_not_two_hits():
 def test_a_user_with_no_answers_cannot_be_scored():
     with pytest.raises(ValueError, match="right answer"):
         recall_at_k(TEN, set())
+
+
+# ---- Bootstrap range ----------------------------------------------------------------
+
+
+def test_range_contains_the_average():
+    values = [0.0] * 90 + [1.0] * 10  # average 0.1
+    low, high = bootstrap_range(values)
+    assert low < 0.1 < high
+
+
+def test_everyone_scoring_the_same_gives_no_range():
+    assert bootstrap_range([0.5] * 50) == pytest.approx((0.5, 0.5))
+
+
+def test_more_users_give_a_narrower_range():
+    few = bootstrap_range([0.0] * 9 + [1.0])  # average 0.1 from 10 users
+    many = bootstrap_range([0.0] * 900 + [1.0] * 100)  # average 0.1 from 1,000 users
+    assert (many[1] - many[0]) < (few[1] - few[0])
+
+
+def test_range_is_the_same_on_every_run():
+    values = [0.0] * 90 + [1.0] * 10
+    assert bootstrap_range(values) == bootstrap_range(values)

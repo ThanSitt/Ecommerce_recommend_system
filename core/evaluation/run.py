@@ -23,6 +23,7 @@ from core.evaluation.answer_key import (
     build_answer_key,
 )
 from core.evaluation.metrics import (
+    bootstrap_range,
     catalogue_coverage,
     ndcg_at_k,
     precision_at_k,
@@ -36,14 +37,17 @@ HITS = {"any": ANY_INTERACTION, "cart or purchase": CART_OR_PURCHASE}
 
 @dataclass
 class Results:
-    """One row of the results table."""
+    """One row of the results table. Each `*_range` is the 95% bootstrap range."""
 
     model: str
     hits: str
     users: int
     precision: float
+    precision_range: tuple[float, float]
     recall: float
+    recall_range: tuple[float, float]
     ndcg: float
+    ndcg_range: tuple[float, float]
     coverage: float
 
 
@@ -55,16 +59,28 @@ def evaluate(model: Recommender, key: AnswerKey, hits: str, k: int = 10) -> Resu
         user: [item for item, _ in model.recommend_for_user(user, n=k)]
         for user in key.relevant
     }
-    users = len(lists)
+    scores = {
+        metric: [score(lists[u], key.relevant[u], k) for u in lists]
+        for metric, score in [
+            ("precision", precision_at_k), ("recall", recall_at_k), ("ndcg", ndcg_at_k),
+        ]
+    }
     return Results(
         model=model.name,
         hits=hits,
-        users=users,
-        precision=sum(precision_at_k(lists[u], key.relevant[u], k) for u in lists) / users,
-        recall=sum(recall_at_k(lists[u], key.relevant[u], k) for u in lists) / users,
-        ndcg=sum(ndcg_at_k(lists[u], key.relevant[u], k) for u in lists) / users,
+        users=len(lists),
+        precision=_mean(scores["precision"]),
+        precision_range=bootstrap_range(scores["precision"]),
+        recall=_mean(scores["recall"]),
+        recall_range=bootstrap_range(scores["recall"]),
+        ndcg=_mean(scores["ndcg"]),
+        ndcg_range=bootstrap_range(scores["ndcg"]),
         coverage=catalogue_coverage(lists.values(), model.metadata.n_items),
     )
+
+
+def _mean(values: list[float]) -> float:
+    return sum(values) / len(values)
 
 
 def run(dataset: str, models: list[str]) -> list[Results]:
@@ -87,16 +103,22 @@ def run(dataset: str, models: list[str]) -> list[Results]:
 
 
 def format_table(results: list[Results]) -> str:
+    """Headline metrics first; each score with its 95% range in brackets."""
     lines = [
-        "| model | hits | users | Precision@10 | Recall@10 | NDCG@10 | coverage |",
+        "| model | hits | users | Recall@10 | NDCG@10 | Precision@10 | coverage |",
         "| --- | --- | --- | --- | --- | --- | --- |",
     ]
     for r in results:
         lines.append(
-            f"| {r.model} | {r.hits} | {r.users:,} | {r.precision:.4f} | {r.recall:.4f} "
-            f"| {r.ndcg:.4f} | {r.coverage:.4f} |"
+            f"| {r.model} | {r.hits} | {r.users:,} | {_with_range(r.recall, r.recall_range)} "
+            f"| {_with_range(r.ndcg, r.ndcg_range)} "
+            f"| {_with_range(r.precision, r.precision_range)} | {r.coverage:.4f} |"
         )
     return "\n".join(lines)
+
+
+def _with_range(value: float, bounds: tuple[float, float]) -> str:
+    return f"{value:.4f} ({bounds[0]:.4f}-{bounds[1]:.4f})"
 
 
 def main(argv: list[str] | None = None) -> None:

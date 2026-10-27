@@ -9,6 +9,9 @@ looks at all users' lists at once.
   ndcg@k       like recall, but a hit at the top counts more than a hit at the bottom
   coverage     what share of the catalogue was recommended to anyone at all?
 
+Recall and NDCG are the headline metrics. Precision is reported too, but a handful of
+users with very many answers move it a lot (see docs/decisions/0004).
+
 See docs/decisions/0004.
 """
 
@@ -16,6 +19,8 @@ from __future__ import annotations
 
 import math
 from collections.abc import Iterable, Sequence, Set
+
+import numpy as np
 
 
 def precision_at_k(recommended: Sequence[str], relevant: Set[str], k: int = 10) -> float:
@@ -62,6 +67,24 @@ def catalogue_coverage(recommendations: Iterable[Sequence[str]], n_items: int) -
     for recommended in recommendations:
         shown.update(recommended)
     return len(shown) / n_items
+
+
+def bootstrap_range(
+    values: Sequence[float], draws: int = 1000, seed: int = 0
+) -> tuple[float, float]:
+    """The 95% range of an average, from re-drawing the users with replacement.
+
+    Answers "how much could this score move if we had happened to get a different set of
+    users?". With few users scoring hits, it moves a lot: two models whose ranges
+    overlap cannot be told apart. Same seed, same range, so reruns match.
+    """
+    values = np.asarray(values, dtype=np.float64)
+    if values.size == 0:
+        raise ValueError("no values to draw from")
+    rng = np.random.default_rng(seed)
+    means = values[rng.integers(0, values.size, size=(draws, values.size))].mean(axis=1)
+    low, high = np.percentile(means, [2.5, 97.5])
+    return float(low), float(high)
 
 
 def _hits(recommended: Sequence[str], relevant: Set[str], k: int) -> int:
