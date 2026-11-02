@@ -1,0 +1,18 @@
+{% comment %}
+  Product page recommendations. Liquid only draws the empty box with the product ID;
+  recommendations.js fills it in the browser from /apps/recs (our App Proxy).
+{% endcomment %}
+<div class="recs-widget" data-item-id="{{ block.settings.product.id }}">
+  {{ 'recommendations.loading' | t }}
+</div>
+
+{% schema %}
+{
+  "name": "Recommendations",
+  "target": "section",
+  "javascript": "recommendations.js",
+  "settings": [
+    { "type": "product", "id": "product", "label": "Product", "autofill": true }
+  ]
+}
+{% endschema %}
