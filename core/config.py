@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     database_url: str
     # Comma-separated during development; replaced by a stores table later.
     core_api_keys: str
+    # The trained model file the API answers from. Made by core.training.train.
+    model_path: str = "models/current.joblib"
 
 
 @lru_cache
