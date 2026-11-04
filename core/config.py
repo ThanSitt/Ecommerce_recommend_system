@@ -11,8 +11,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    # extra="ignore": .env also holds connector settings (SHOPIFY_..., CORE_API_URL)
-    # that the core does not use.
+    # extra="ignore": .env also holds connector settings that the core does not use.
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str

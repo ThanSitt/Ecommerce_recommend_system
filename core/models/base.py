@@ -111,10 +111,9 @@ class Recommender(ABC):
     def fit(self, data) -> None:
         """Learn from past behaviour.
 
-        `data` is the prepared interaction set produced by `core/data` — the sparse
-        user x item matrix plus the ID mappings. Its concrete type is defined in
-        Phase 1; models receive it already built so that the preparation happens once
-        rather than six times.
+        `data` is an `Interactions` from `core/data/interactions.py` — the sparse
+        user x item matrix plus the ID mappings. Models receive it already built so that
+        the preparation happens once rather than six times.
         """
 
     @abstractmethod
