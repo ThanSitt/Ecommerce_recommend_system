@@ -1,7 +1,8 @@
 # 0005 — The fallback, and scoring what the site actually serves
 
 **Status:** Accepted by Person A, 2026-11-04. The fallback changes `core/api`, which Person
-B owns, so that part is to be confirmed with them.
+B owns, so that part is to be confirmed with them. The fallback was first all-time
+most-popular and is now recently popular, for the reason given below.
 **Decided by:** Person A
 **Affects:** `core/api`, `core/training`, `core/evaluation`, the deployment gate, and every
 results table in the thesis. Extends 0004.
@@ -26,8 +27,8 @@ system that was measured is the system that was demonstrated.
 
 | Choice | Value |
 | --- | --- |
-| When a model raises `ColdStartError` | the API serves the most-popular list instead |
-| Where the list comes from | `fallback.joblib`, a most-popular model written by training beside the main model, from the same data |
+| When a model raises `ColdStartError` | the API serves the recently popular list instead |
+| Where the list comes from | `fallback.joblib`, a recently popular model written by training beside the main model, from the same data |
 | If that file is missing | an empty list and a logged warning, not an error |
 | New exam: product page | scores `similar_items` the way the endpoint uses it |
 | The question | the first product the user viewed that the model knows, once per user |
@@ -43,7 +44,7 @@ Code: `core/models/loading.py` (`fallback_path`), `core/training/train.py`,
 
 ### A fallback file beside the model
 
-Most-popular needs no history, so it can answer for any product. Training it on the same
+A popularity list needs no history, so it can answer for any product. Training it on the same
 data as the main model means it only offers products the store had at that time, and saving
 it in the same folder means that giving each store its own model folder later gives it its
 own fallback too, with no further change.
@@ -53,6 +54,34 @@ to carry a second model, and giving up is the API's concern in the interface, no
 model's); computing it from the events table at request time (a second definition of
 "popular" that could disagree with the one evaluated, and a database query on every request
 that needs it).
+
+### Recently popular, not all-time most-popular
+
+Recently popular counts different users over the last 14 days of training, instead of all
+110. Scored on the product page exam, which is the kind of page the fallback serves:
+
+| Validation, any interaction | Recall@10 | NDCG@10 |
+| --- | --- | --- |
+| most-popular | 0.0101 (0.0087–0.0116) | 0.0049 (0.0043–0.0057) |
+| recently popular | 0.0141 (0.0125–0.0160) | 0.0098 (0.0087–0.0112) |
+
+The ranges do not overlap, so the difference is real. What is popular does move: only 5 of
+the two lists' top 10 products are shared. On cart-or-purchase, and on the personal exam, the
+two cannot be told apart. Nowhere is most-popular measurably better. The exam only asks about
+products the model knows, while the fallback answers the others, so this is the best evidence
+available rather than a direct measurement of fallback pages.
+
+The window was fixed at 14 days before any results were seen, because it matches the length
+of the evaluation periods, and it is not tuned. 7 and 28 days were run only to check that the
+result does not hinge on the number: they score a Recall@10 of 0.0148 and 0.0127.
+
+Ties go to the product more users touched overall. A quiet store may have few events in the
+window, and this keeps its list sensible rather than in ID order. It never outranks a product
+with more users in the window, and it leaves every Retailrocket score above unchanged.
+
+**Considered instead:** keeping most-popular (simpler, but it scored measurably worse, and the
+fallback answers about 4 in 10 product views); choosing the window that scores best (a baseline tuned until it scores well
+is just another model).
 
 ### Score the product page, and keep the personal exam
 

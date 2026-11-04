@@ -37,8 +37,7 @@ from core.evaluation.metrics import (
     recall_at_k,
 )
 from core.models.base import ColdStartError, Recommender
-from core.models.baselines import MostPopularRecommender
-from core.training.train import MODELS, prepare
+from core.training.train import MODELS, fit_fallback, prepare
 
 HITS = {"any": ANY_INTERACTION, "cart or purchase": CART_OR_PURCHASE}
 PERSONAL = "personal"
@@ -150,8 +149,7 @@ def run(dataset: str, models: list[str]) -> list[Results]:
     personal_keys = _with_users(PERSONAL, {
         hits: build_answer_key(grid, validation, types) for hits, types in HITS.items()
     })
-    fallback = MostPopularRecommender(store_id=dataset)
-    fallback.fit(grid)
+    fallback = fit_fallback(dataset, grid)
 
     results = []
     for name in models:

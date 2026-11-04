@@ -135,9 +135,9 @@ def test_files_written_by_training_serve_the_fallback(cold_model, tmp_path):
 
     assert response.status_code == 200
     assert len(response.json()["items"]) == 3
-    assert trained.name == "random"  # the main model was random; the answer is most-popular
+    assert trained.name == "random"  # the main model was random; the answer is the fallback
     fallback = get_fallback(settings)
-    assert fallback.name == "popular"
+    assert fallback.name == "recent"
     assert response.json()["items"] == [item for item, _ in fallback.similar_items("unknown", n=3)]
 
 

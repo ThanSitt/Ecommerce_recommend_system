@@ -81,7 +81,7 @@ def test_report_and_grid_agree():
 
     assert prepared.filter_report.users_after == prepared.grid.n_users
     assert prepared.filter_report.items_after == prepared.grid.n_items
-    assert len(prepared.train_events) == prepared.filter_report.events_after
+    assert len(prepared.grid.events) == prepared.filter_report.events_after
 
 
 def test_whole_pipeline_on_the_committed_fixture():

@@ -66,7 +66,7 @@ solving the small-numbers problem).
 Three rules decide what goes into a user's answers:
 
 1. **The user must be in the training grid.** No model can personalise for someone it has
-   never seen. These users receive the most-popular fallback in production.
+   never seen. These users would receive the fallback list (see 0005).
 2. **The product must be in the training grid.** A model cannot recommend a product it
    does not know.
 3. **The user must not have touched it in training.** Every model excludes products the
@@ -176,7 +176,7 @@ the two cannot be told apart. This is the reason that definition is secondary.
   comparisons, never as "the model is right 0.8% of the time" in a commercial sense.
 - Results cover about 2% of validation users (2,632 of 141,559), and only 3% are known to
   the model at all. The thesis states this alongside every table: personal recommendations
-  are unavailable for the other 97%, who receive the most-popular fallback.
+  are unavailable for the other 97%, who would receive the fallback list (see 0005).
 - `similar_items` is not measured by this method. 0005 adds an exam for it, using the first
   product each user viewed.
 - The test period has no code path in the evaluation runner. Adding one is a deliberate

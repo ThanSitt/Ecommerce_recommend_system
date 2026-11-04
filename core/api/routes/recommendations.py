@@ -3,7 +3,7 @@
 The connector sends the product being viewed and gets back product IDs, best first.
 Only IDs: names, prices and images belong to the store, so the connector looks them up.
 
-A product the model knows nothing about gets the most-popular list instead, so a shopper
+A product the model knows nothing about gets recent best sellers instead, so a shopper
 sees something rather than an error.
 """
 

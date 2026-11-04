@@ -33,8 +33,8 @@ def get_model(settings: Settings = Depends(get_settings)) -> Recommender:
 
 
 def get_fallback(settings: Settings = Depends(get_settings)) -> Recommender | None:
-    """FastAPI dependency: the most-popular model saved beside the main one, for when the
-    main one has no basis to answer. None if there is no such file."""
+    """FastAPI dependency: the fallback model saved beside the main one, for when the main
+    one has no basis to answer. None if there is no such file."""
     path = fallback_path(settings.model_path)
     if not path.is_file():
         return None

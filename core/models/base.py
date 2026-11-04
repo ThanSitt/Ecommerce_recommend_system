@@ -46,7 +46,7 @@ class ColdStartError(Exception):
     """Raised when the model has no basis to answer.
 
     An unknown user, or a user whose history was filtered out of training. The API
-    catches this and falls back to most-popular rather than returning an empty list —
+    catches this and falls back to a popularity list rather than returning an empty list —
     a shopper should always see something.
     """
 
