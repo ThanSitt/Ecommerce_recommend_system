@@ -1,11 +1,15 @@
 """Scoring a model end to end."""
 
+import math
+from unittest.mock import MagicMock
+
 import pandas as pd
 import pytest
 
 from core.data.interactions import build_interactions
-from core.evaluation.answer_key import build_answer_key
-from core.evaluation.run import evaluate, main
+from core.evaluation.answer_key import build_answer_key, build_product_page_key
+from core.evaluation.run import PRODUCT_PAGE, evaluate, evaluate_product_page, main
+from core.models.base import ColdStartError
 from core.models.baselines import MostPopularRecommender
 
 
@@ -22,21 +26,40 @@ def events_from(pairs: list[tuple[str, str]], day: str) -> pd.DataFrame:
     )
 
 
+def views_at(rows: list[tuple[str, str, str]]) -> pd.DataFrame:
+    """One view per (user, item, time of day) row, in the later period."""
+    return pd.DataFrame(
+        {
+            "user_id": [u for u, _, _ in rows],
+            "item_id": [i for _, i, _ in rows],
+            "event_type": "view",
+            "timestamp": pd.to_datetime([f"2015-08-25 {t}" for _, _, t in rows], utc=True),
+            "order_id": None,
+        }
+    )
+
+
+# Training: x touched by 3 users, y by 2, z by 1.
+GRID = build_interactions(events_from(
+    [("a", "x"), ("b", "x"), ("c", "x"), ("a", "y"), ("b", "y"), ("c", "z")],
+    "2015-06-01",
+))
+
+
+def popular() -> MostPopularRecommender:
+    model = MostPopularRecommender("test")
+    model.fit(GRID)
+    return model
+
+
 def test_scores_worked_out_by_hand():
-    # Training: x touched by 3 users, y by 2, z by 1.
-    grid = build_interactions(events_from(
-        [("a", "x"), ("b", "x"), ("c", "x"), ("a", "y"), ("b", "y"), ("c", "z")],
-        "2015-06-01",
-    ))
     # Later: a touches z, c touches y, b touches an unknown item (not scored).
     key = build_answer_key(
-        grid, events_from([("a", "z"), ("c", "y"), ("b", "new")], "2015-08-25")
+        GRID, events_from([("a", "z"), ("c", "y"), ("b", "new")], "2015-08-25")
     )
-    model = MostPopularRecommender("test")
-    model.fit(grid)
 
     # Most-popular minus what each has seen: a gets [z], c gets [y]. Both hit at #1.
-    results = evaluate(model, key, "any")
+    results = evaluate(popular(), key, "any")
 
     assert results.users == 2
     assert results.precision == pytest.approx(0.1)  # 1 right of 10, for both
@@ -54,10 +77,62 @@ def test_an_empty_answer_key_cannot_be_scored():
         evaluate(model, key, "any")
 
 
-def test_command_prints_a_row_per_model(capsys):
+# ---- The product page exam -----------------------------------------------------------
+
+
+# s and t are strangers. s: page x, then touches z. t: page y, then touches x.
+PAGE_KEY = build_product_page_key(GRID, views_at([
+    ("s", "x", "10:00"), ("s", "z", "11:00"),
+    ("t", "y", "10:00"), ("t", "x", "11:00"),
+]))
+
+
+def test_product_page_scores_worked_out_by_hand():
+    # Most-popular minus the page's own product: page x shows [y, z], page y shows [x, z].
+    # s: z is at #2, worth 1/log2(3). t: x is at #1, worth 1.
+    results = evaluate_product_page(popular(), popular(), PAGE_KEY, "any")
+
+    assert results.exam == PRODUCT_PAGE
+    assert results.users == 2
+    assert results.recall == pytest.approx(1.0)
+    assert results.ndcg == pytest.approx((1 / math.log2(3) + 1) / 2)
+    assert results.precision == pytest.approx(0.1)
+    assert results.coverage == pytest.approx(1.0)  # x, y and z were all shown
+    assert results.fallback_share == 0
+
+
+def test_a_page_the_model_cannot_answer_gets_the_fallback_list():
+    # As on the live site: the model gives up on page x, so the fallback answers it.
+    model = MagicMock()
+    model.name = "item-to-item"
+    model.metadata.n_items = 3
+
+    def similar_items(item, n):
+        if item == "x":
+            raise ColdStartError(item)
+        return [("z", 1.0)]  # for page y: not t's answer, a miss
+
+    model.similar_items.side_effect = similar_items
+
+    results = evaluate_product_page(model, popular(), PAGE_KEY, "any")
+
+    assert results.model == "item-to-item"
+    assert results.fallback_share == pytest.approx(0.5)  # s's page, not t's
+    assert results.recall == pytest.approx(0.5)  # s found z through the fallback; t missed
+
+
+def test_an_empty_product_page_key_cannot_be_scored():
+    key = build_product_page_key(GRID, views_at([("s", "x", "10:00")]))
+    with pytest.raises(ValueError, match="no users"):
+        evaluate_product_page(popular(), popular(), key, "any")
+
+
+def test_command_prints_a_row_per_model_and_exam(capsys):
     main(["--dataset", "fixture", "--model", "popular", "random"])
     table = capsys.readouterr().out
-    assert "| popular | any |" in table
-    assert "| random | any |" in table
-    # The fixture is too small for a cart-or-purchase key: skipped, with a note.
-    assert "skipping hits='cart or purchase'" in table
+    assert "| popular | product page | any |" in table
+    assert "| random | product page | any |" in table
+    assert "| popular | personal | any |" in table
+    assert "| random | personal | any |" in table
+    # The fixture is too small for a personal cart-or-purchase key: skipped, with a note.
+    assert "skipping personal exam, hits='cart or purchase'" in table

@@ -34,10 +34,10 @@ def load_retailrocket(path: str | Path) -> tuple[pd.DataFrame, int]:
     """
     raw = pd.read_csv(
         path,
-        # IDs are read as text, not numbers. Shopify sends IDs as strings, so both sources
-        # must agree, or "355908" and 355908 become two different items. Reading as text
-        # also stops pandas turning transactionid into a float ("4000.0"), which it does
-        # because the column has empty cells.
+        # IDs are read as text, not numbers. The event contract's IDs are strings, so every
+        # source must agree, or "355908" and 355908 become two different items. Reading as
+        # text also stops pandas turning transactionid into a float ("4000.0"), which it
+        # does because the column has empty cells.
         dtype={"visitorid": str, "itemid": str, "transactionid": str},
     )
 

@@ -1,6 +1,7 @@
 # 0004 — How models are scored
 
-**Status:** Accepted, 2026-10-27
+**Status:** Accepted, 2026-10-27. Extended by 0005, which adds a second exam for what the
+live site serves.
 **Decided by:** Person A
 **Affects:** `core/evaluation`, every results table in the thesis, and the deployment gate
 
@@ -173,11 +174,10 @@ the two cannot be told apart. This is the reason that definition is secondary.
 
 - Absolute numbers are small for every model on this dataset and must be read as
   comparisons, never as "the model is right 0.8% of the time" in a commercial sense.
-- Results cover about 3% of validation users. The thesis states this alongside every
-  table: the other 97% receive the most-popular fallback, which is what most real
-  traffic would see.
-- `similar_items` is not measured by this method. Measuring it for users unknown to the
-  model, using the first product they viewed, is planned for Phase 3, when item-to-item
-  exists.
+- Results cover about 2% of validation users (2,632 of 141,559), and only 3% are known to
+  the model at all. The thesis states this alongside every table: personal recommendations
+  are unavailable for the other 97%, who receive the most-popular fallback.
+- `similar_items` is not measured by this method. 0005 adds an exam for it, using the first
+  product each user viewed.
 - The test period has no code path in the evaluation runner. Adding one is a deliberate
   step in Phase 6.
