@@ -1,14 +1,21 @@
-"""The answer key: for each user, the products they actually touched in a later period.
+"""The answer keys: for each user, the products they actually touched in a later period.
 
-Every model is marked against the same key, built once from the evaluation period and
+Every model is marked against the same keys, built once from the evaluation period and
 independent of any model, so random, most-popular and ALS are compared on identical
-answers. See docs/decisions/0004.
+answers. There are two exams, one for each question a model can be asked:
 
-A product counts towards a user's answers only if a model could have recommended it:
+  Personal (`recommend_for_user`, docs/decisions/0004): "what will this user touch next?"
+  Product page (`similar_items`, docs/decisions/0005): "this user is on this product's
+  page, what will they touch after it?" The question the live endpoint asks.
 
-  - the user is in the training grid (otherwise no model knows them),
+In both, a product counts towards a user's answers only if:
+
   - the product is in the training grid (otherwise no model knows it),
-  - the user had not touched it in training (models never recommend those).
+  - the user had not touched it in training (no credit for showing someone what they
+    already know).
+
+The personal exam also needs the user to be in the grid. The product page exam does not:
+it uses no history, so it can score users no model has seen.
 
 Users left with no answers are not scored at all: they would score 0 for every model,
 which says nothing about the models.
@@ -45,6 +52,24 @@ class AnswerKey:
         return len(self.relevant)
 
 
+@dataclass
+class ProductPageKey:
+    """Who is scored on the product page exam, on which page, and what counts as a hit."""
+
+    # user_id -> the product whose page the model is asked about
+    questions: dict[str, str]
+    # user_id -> the products that count as hits for that user
+    relevant: dict[str, frozenset[str]]
+    event_types: tuple[str, ...]
+    # How many users there were at each stage, for the thesis.
+    users_in_period: int
+    users_with_question: int
+
+    @property
+    def scorable_users(self) -> int:
+        return len(self.relevant)
+
+
 def build_answer_key(
     grid: Interactions,
     future: pd.DataFrame,
@@ -58,22 +83,76 @@ def build_answer_key(
     events = known[
         known["event_type"].isin(event_types) & known["item_id"].isin(grid.item_index)
     ]
-    if events.empty:
-        # Checked separately: scipy returns a different type when indexing with nothing.
-        hits = events
-    else:
-        rows = events["user_id"].map(grid.user_index).to_numpy()
-        cols = events["item_id"].map(grid.item_index).to_numpy()
-        # A filled cell in the training grid = the user already touched that item.
-        seen_before = np.asarray(grid.matrix[rows, cols]).ravel() != 0
-        hits = events[~seen_before]
+    hits = events[~_touched_in_training(grid, events)]
 
-    relevant = {
-        user: frozenset(items) for user, items in hits.groupby("user_id")["item_id"]
-    }
     return AnswerKey(
-        relevant=relevant,
+        relevant=_answers_per_user(hits),
         event_types=tuple(event_types),
         users_in_period=users_in_period,
         known_users=known_users,
     )
+
+
+def build_product_page_key(
+    grid: Interactions,
+    future: pd.DataFrame,
+    event_types: tuple[str, ...] = ANY_INTERACTION,
+) -> ProductPageKey:
+    """Build the product page key from `future` events (validation, or test in Phase 6).
+
+    The question is the first product the user viewed that the model knows, once per
+    user, so every user counts the same as in the personal exam. The answers are the
+    known products they first touched after that. A view is the question whichever
+    `event_types` is, because a product page visit is a view.
+
+    Retailrocket has no sessions, so "after" can mean days later.
+    """
+    known_items = future[future["item_id"].isin(grid.item_index)].sort_values(
+        "timestamp", kind="stable"
+    )
+    views = known_items[known_items["event_type"] == "view"]
+    first_views = views.drop_duplicates("user_id").set_index("user_id")
+
+    events = known_items[known_items["user_id"].isin(first_views.index)]
+    if events.empty:
+        answers: dict[str, frozenset[str]] = {}
+    else:
+        asked_at = events["user_id"].map(first_views["timestamp"])
+        # First touch, not any touch: this rules out the question's own product, and any
+        # product the user had already touched before reaching the page.
+        first_touch = events.groupby(["user_id", "item_id"])["timestamp"].transform("min")
+        answers = _answers_per_user(
+            events[
+                (first_touch > asked_at)
+                & events["event_type"].isin(event_types)
+                & ~_touched_in_training(grid, events)
+            ]
+        )
+
+    return ProductPageKey(
+        questions={user: first_views.at[user, "item_id"] for user in answers},
+        relevant=answers,
+        event_types=tuple(event_types),
+        users_in_period=future["user_id"].nunique(),
+        users_with_question=len(first_views),
+    )
+
+
+def _touched_in_training(grid: Interactions, events: pd.DataFrame) -> np.ndarray:
+    """For each event on a grid item: had this user already touched it in training?
+
+    A filled cell in the training grid means yes. Users the grid doesn't know touched
+    nothing it knows of.
+    """
+    touched = np.zeros(len(events), dtype=bool)
+    known = events["user_id"].isin(grid.user_index).to_numpy()
+    # Checked first: scipy returns a different type when indexing with nothing.
+    if known.any():
+        rows = events["user_id"][known].map(grid.user_index).to_numpy()
+        cols = events["item_id"][known].map(grid.item_index).to_numpy()
+        touched[known] = np.asarray(grid.matrix[rows, cols]).ravel() != 0
+    return touched
+
+
+def _answers_per_user(hits: pd.DataFrame) -> dict[str, frozenset[str]]:
+    return {user: frozenset(items) for user, items in hits.groupby("user_id")["item_id"]}
