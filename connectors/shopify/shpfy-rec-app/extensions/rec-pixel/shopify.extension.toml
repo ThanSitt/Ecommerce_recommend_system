@@ -1,0 +1,32 @@
+name = "rec-pixel"
+type = "web_pixel_extension"
+uid = "00538a1d-ffd5-58ac-3be8-75332af19bd75b18e8f1"
+
+runtime_context = "strict"
+
+# Which consent a visitor must give before this pixel runs at all. We record views, carts
+# and purchases to build recommendations: that is analytics. We show no ads, do not
+# store visitor preferences, and do not sell or pass on the data (it goes only to our own
+# service, for that store). All four must be declared to override Shopify's defaults
+# (marketing and sale_of_data on), which would drop events from visitors who decline
+# marketing, a purpose we don't have.
+[customer_privacy]
+analytics = true
+marketing = false
+preferences = false
+sale_of_data = "disabled"
+
+[settings]
+type = "object"
+
+# Our Shopify app's address, where the pixel sends events. One value for every shop, but
+# Shopify keeps pixel settings per shop, so the app sets it for each one (activatePixel
+# in app/stores.server.ts). A setting rather than written into the code, because in
+# development the tunnel address changes on every `npm run dev`.
+[settings.fields.appUrl]
+name = "App URL"
+description = "Address of the recommendations app that receives events"
+type = "single_line_text_field"
+validations = [
+  { name = "min", value = "1" }
+]

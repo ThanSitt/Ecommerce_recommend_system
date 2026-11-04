@@ -7,10 +7,13 @@ import type {
 import { useFetcher } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
+import { activatePixel } from "../stores.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+  const { admin } = await authenticate.admin(request);
+  // Switch the pixel on for this shop, or point it at the current app URL.
+  await activatePixel(admin);
 
   return null;
 };
