@@ -12,6 +12,17 @@ import joblib
 
 from core.models.base import Recommender
 
+FALLBACK_FILENAME = "fallback.joblib"
+
+
+def fallback_path(model_path: Path | str) -> Path:
+    """Where a model's most-popular fallback lives: beside it, in the same folder.
+
+    Training writes it here and the API reads it from here, so the two cannot disagree,
+    and giving each store its own model folder later gives it its own fallback too.
+    """
+    return Path(model_path).with_name(FALLBACK_FILENAME)
+
 
 def load_model(path: Path | str) -> Recommender:
     """Read a model written by `Recommender.save`.

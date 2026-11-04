@@ -1,4 +1,4 @@
-"""Train a model and save it to a dated file.
+"""Train a model and save it to a dated file, with its most-popular fallback beside it.
 
     python -m core.training.train --dataset fixture --model popular
     python -m core.training.train --dataset retailrocket --model random
@@ -20,6 +20,7 @@ from core.data.retailrocket import load_retailrocket
 from core.data.split import RETAILROCKET_TEST_START, RETAILROCKET_VALIDATION_START
 from core.models.base import Recommender
 from core.models.baselines import MostPopularRecommender, RandomRecommender
+from core.models.loading import fallback_path
 
 ROOT = Path(__file__).resolve().parents[2]
 RETAILROCKET = ROOT / "data" / "raw" / "events.csv"
@@ -56,6 +57,11 @@ def train(
         # Versioned by training date (CLAUDE.md); the service loads one by path.
         out = ROOT / "models" / dataset / f"{model}-{date.today().isoformat()}.joblib"
     recommender.save(out)
+    # What the API serves when this model has no basis to answer. Trained on the same data,
+    # so it can only offer products the store had when the model was trained.
+    fallback = MostPopularRecommender(store_id=dataset)
+    fallback.fit(prepared.grid)
+    fallback.save(fallback_path(out))
     return recommender, out, prepared
 
 
@@ -69,6 +75,7 @@ def main(argv: list[str] | None = None) -> None:
     recommender, out, prepared = train(args.dataset, args.model, args.out)
     meta = recommender.metadata
     print(f"saved {meta.algorithm} model to {out}")
+    print(f"saved fallback to {fallback_path(out)}")
     print(f"  {meta.n_users} users, {meta.n_items} items, "
           f"events {meta.events_from:%Y-%m-%d} -> {meta.events_to:%Y-%m-%d}")
     # Real IDs from the training data, to try against the API.

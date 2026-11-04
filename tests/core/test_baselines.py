@@ -5,7 +5,7 @@ import pytest
 
 from core.data.interactions import build_interactions
 from core.models.baselines import MostPopularRecommender, RandomRecommender
-from core.models.loading import load_model
+from core.models.loading import fallback_path, load_model
 from core.training.train import train
 
 
@@ -131,3 +131,16 @@ def test_training_command_makes_a_loadable_file(tmp_path):
     model = load_model(path)
     assert model.metadata.algorithm == "popular"
     assert len(model.recommend_for_user("someone-new")) == 10
+
+
+def test_training_saves_a_most_popular_fallback_beside_the_model(tmp_path):
+    trained, path, _ = train("fixture", "random", tmp_path / "current.joblib")
+    fallback = load_model(tmp_path / "fallback.joblib")
+
+    assert path == tmp_path / "current.joblib"
+    assert fallback_path(path) == tmp_path / "fallback.joblib"
+    assert trained.metadata.algorithm == "random"
+    assert fallback.metadata.algorithm == "popular"
+    # Same training data, same store.
+    assert fallback.metadata.store_id == trained.metadata.store_id
+    assert fallback.metadata.events_to == trained.metadata.events_to
