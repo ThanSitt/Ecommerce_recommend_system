@@ -93,6 +93,14 @@ def test_time_window_is_recorded():
     assert grid.events_to == pd.Timestamp("2015-07-15", tz="UTC")
 
 
+def test_the_events_behind_the_grid_are_kept():
+    rows = [("a", "x", "view"), ("a", "x", "cart")]  # two events, one cell
+    grid = build_interactions(events_from(rows))
+    assert grid.matrix.nnz == 1
+    assert len(grid.events) == 2
+    assert "timestamp" in grid.events
+
+
 def test_event_type_without_a_weight_fails_loudly():
     with pytest.raises(ValueError, match="no weight"):
         build_interactions(events_from([("a", "x", "wishlist")]))

@@ -35,9 +35,6 @@ class PreparedData:
 
     # What fit(data) receives.
     grid: Interactions
-    # The filtered training events behind the grid, with timestamps kept, for models
-    # that care about *when* (recently popular).
-    train_events: pd.DataFrame
     # Not filtered: users and items the model never saw are the evaluation's problem.
     validation: pd.DataFrame
     # Sealed until Phase 6.
@@ -63,7 +60,6 @@ def prepare_events(
     )
     return PreparedData(
         grid=build_interactions(train_events, weights),
-        train_events=train_events,
         validation=split.validation,
         test=split.test,
         filter_report=report,

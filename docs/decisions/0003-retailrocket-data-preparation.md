@@ -171,7 +171,7 @@ a reasonable alternative and may be tried in Phase 4 if tuning time allows.
 - **Small stores cannot use these settings.** On the 739-visitor test fixture, "items need
   5 users" removes everything and the grid cannot be built. A small store is in the same
   position, so the production pipeline (Phase 5) needs per-store settings or a
-  minimum-data rule, with the most-popular fallback below it.
+  minimum-data rule, with the fallback list below it.
 - Every setting is a named constant or parameter, and `prepare_retailrocket` applies all
   of them in one call, so the results table can always be traced back to the settings
   recorded here.

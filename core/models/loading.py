@@ -16,7 +16,7 @@ FALLBACK_FILENAME = "fallback.joblib"
 
 
 def fallback_path(model_path: Path | str) -> Path:
-    """Where a model's most-popular fallback lives: beside it, in the same folder.
+    """Where a model's fallback lives: beside it, in the same folder.
 
     Training writes it here and the API reads it from here, so the two cannot disagree,
     and giving each store its own model folder later gives it its own fallback too.

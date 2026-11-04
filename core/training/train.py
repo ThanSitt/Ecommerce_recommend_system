@@ -1,4 +1,4 @@
-"""Train a model and save it to a dated file, with its most-popular fallback beside it.
+"""Train a model and save it to a dated file, with its fallback beside it.
 
     python -m core.training.train --dataset fixture --model popular
     python -m core.training.train --dataset retailrocket --model random
@@ -15,11 +15,16 @@ import argparse
 from datetime import date
 from pathlib import Path
 
+from core.data.interactions import Interactions
 from core.data.prepare import PreparedData, prepare_events, prepare_retailrocket
 from core.data.retailrocket import load_retailrocket
 from core.data.split import RETAILROCKET_TEST_START, RETAILROCKET_VALIDATION_START
 from core.models.base import Recommender
-from core.models.baselines import MostPopularRecommender, RandomRecommender
+from core.models.baselines import (
+    MostPopularRecommender,
+    RandomRecommender,
+    RecentlyPopularRecommender,
+)
 from core.models.loading import fallback_path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -29,6 +34,7 @@ FIXTURE = ROOT / "tests" / "fixtures" / "events_sample.csv"
 MODELS: dict[str, type[Recommender]] = {
     "random": RandomRecommender,
     "popular": MostPopularRecommender,
+    "recent": RecentlyPopularRecommender,
 }
 
 
@@ -45,6 +51,19 @@ def prepare(dataset: str) -> PreparedData:
     raise ValueError(f"unknown dataset: {dataset}")
 
 
+def fit_fallback(store_id: str, grid: Interactions) -> Recommender:
+    """What the API serves when a model has no basis to answer.
+
+    Recently popular, because it beats all-time most-popular on the product page exam
+    (docs/decisions/0005). Trained on the same data as the model, so it only offers products
+    the store had at that time. The evaluation uses this too, so what is scored is what is
+    served.
+    """
+    fallback = RecentlyPopularRecommender(store_id=store_id)
+    fallback.fit(grid)
+    return fallback
+
+
 def train(
     dataset: str, model: str, out: Path | None = None
 ) -> tuple[Recommender, Path, PreparedData]:
@@ -57,11 +76,7 @@ def train(
         # Versioned by training date (CLAUDE.md); the service loads one by path.
         out = ROOT / "models" / dataset / f"{model}-{date.today().isoformat()}.joblib"
     recommender.save(out)
-    # What the API serves when this model has no basis to answer. Trained on the same data,
-    # so it can only offer products the store had when the model was trained.
-    fallback = MostPopularRecommender(store_id=dataset)
-    fallback.fit(prepared.grid)
-    fallback.save(fallback_path(out))
+    fit_fallback(dataset, prepared.grid).save(fallback_path(out))
     return recommender, out, prepared
 
 

@@ -36,6 +36,8 @@ class Interactions:
     # The time window the events came from, for ModelMetadata.events_from / events_to.
     events_from: pd.Timestamp
     events_to: pd.Timestamp
+    # The events behind the grid, dates included, for models that care about *when*.
+    events: pd.DataFrame = field(repr=False)
     user_index: dict[str, int] = field(init=False, repr=False)  # user_id -> row number
     item_index: dict[str, int] = field(init=False, repr=False)  # item_id -> column number
 
@@ -94,4 +96,5 @@ def build_interactions(
         weights=weights,
         events_from=events["timestamp"].min(),
         events_to=events["timestamp"].max(),
+        events=events,
     )
