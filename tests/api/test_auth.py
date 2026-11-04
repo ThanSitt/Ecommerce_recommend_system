@@ -1,9 +1,12 @@
+from unittest.mock import MagicMock
+
 import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
+from core.api import auth
 from core.api.auth import get_store_id
-from core.config import Settings, get_settings
+from core.db.session import get_db
 
 # A throwaway app with one protected endpoint, so auth is tested on its own,
 # independently of any real endpoint.
@@ -15,21 +18,28 @@ def protected(store_id: str = Depends(get_store_id)):
     return {"store_id": store_id}
 
 
-app.dependency_overrides[get_settings] = lambda: Settings(
-    _env_file=None,
-    database_url="unused",
-    core_api_keys="key-a, key-b",
-)
+# Stands in for the stores table: key -> store. An uninstalled store's key is simply not
+# in here, which is what find_store_id reports for it (tested in tests/core/test_stores.py).
+STORES = {"key-a": "st_a", "key-b": "st_b"}
+
+
+@pytest.fixture(autouse=True)
+def fake_stores(monkeypatch):
+    monkeypatch.setattr(auth, "find_store_id", lambda session, key: STORES.get(key))
+    app.dependency_overrides[get_db] = lambda: MagicMock()
+    yield
+    app.dependency_overrides.clear()
+
 
 client = TestClient(app)
 
 
-@pytest.mark.parametrize("key", ["key-a", "key-b"])
-def test_valid_key_resolves_to_store(key):
+@pytest.mark.parametrize("key, store_id", [("key-a", "st_a"), ("key-b", "st_b")])
+def test_each_key_resolves_to_its_own_store(key, store_id):
     response = client.get("/protected", headers={"Authorization": f"Bearer {key}"})
 
     assert response.status_code == 200
-    assert response.json() == {"store_id": "dev"}
+    assert response.json() == {"store_id": store_id}
 
 
 def test_scheme_is_case_insensitive():
@@ -52,7 +62,6 @@ def test_missing_header_is_rejected():
         "Bearer ",
         "key-a",  # no scheme
         "Basic key-a",  # wrong scheme
-        "Bearer key-a, key-b",  # the whole env value is not a key
     ],
 )
 def test_bad_header_is_rejected(header):

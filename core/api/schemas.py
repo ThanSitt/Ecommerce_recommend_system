@@ -38,3 +38,11 @@ class IngestResponse(BaseModel):
     received: int
     inserted: int
     duplicates: int
+
+
+class StoreCreated(BaseModel):
+    """Answer to POST /v1/stores. The only time the plain API key is ever returned:
+    the core saves just its hash, so a lost key cannot be recovered, only replaced."""
+
+    store_id: str
+    api_key: str

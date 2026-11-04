@@ -32,3 +32,13 @@ model Session {
   refreshToken        String?
   refreshTokenExpires DateTime?
 }
+
+// A shop registered with the core. Ours, unlike Session, which the Shopify library
+// rewrites on every token renewal and deletes on uninstall. Linked to Session by the
+// shop domain only, so this row survives an uninstall and a reinstall keeps its history.
+model Shop {
+  shop        String   @id // e.g. store-a.myshopify.com
+  coreStoreId String   @unique // the core's store_id; events are filed under it
+  coreApiKey  String // sent to the core on every request for this shop
+  createdAt   DateTime @default(now())
+}

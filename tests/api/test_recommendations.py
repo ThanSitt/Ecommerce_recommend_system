@@ -11,9 +11,11 @@ import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
+from core.api import auth
 from core.api.main import app
 from core.api.model import get_fallback, get_model
 from core.config import Settings, get_settings
+from core.db.session import get_db
 from core.models.base import ColdStartError
 from core.training.train import train
 
@@ -28,10 +30,12 @@ def fake_model():
 
 
 @pytest.fixture
-def client(fake_model):
-    app.dependency_overrides[get_settings] = lambda: Settings(
-        _env_file=None, database_url="unused", core_api_keys="test-key"
+def client(fake_model, monkeypatch):
+    # Stands in for the stores table: only "test-key" belongs to a store.
+    monkeypatch.setattr(
+        auth, "find_store_id", lambda session, key: "st_test" if key == "test-key" else None
     )
+    app.dependency_overrides[get_db] = lambda: MagicMock()
     app.dependency_overrides[get_model] = lambda: fake_model
     yield TestClient(app)
     app.dependency_overrides.clear()
@@ -72,7 +76,7 @@ def test_n_out_of_range_is_rejected(client, n):
 
 def test_missing_model_file_gives_503(tmp_path):
     settings = Settings(
-        _env_file=None, database_url="unused", core_api_keys="k",
+        _env_file=None, database_url="unused", core_admin_key="unused",
         model_path=str(tmp_path / "missing.joblib"),
     )
 
@@ -121,17 +125,15 @@ def test_fallback_is_not_used_when_the_model_answers(client):
     fallback.similar_items.assert_not_called()
 
 
-def test_files_written_by_training_serve_the_fallback(cold_model, tmp_path):
+def test_files_written_by_training_serve_the_fallback(client, cold_model, tmp_path):
     # No fake fallback here: the real file that training writes, read the way the API does.
     trained, path, _ = train("fixture", "random", tmp_path / "current.joblib")
     settings = Settings(
-        _env_file=None, database_url="unused", core_api_keys="test-key", model_path=str(path)
+        _env_file=None, database_url="unused", core_admin_key="unused", model_path=str(path)
     )
     app.dependency_overrides[get_settings] = lambda: settings
-    app.dependency_overrides[get_model] = lambda: cold_model
 
-    response = TestClient(app).get("/v1/recommendations?item_id=unknown&n=3", headers=AUTH)
-    app.dependency_overrides.clear()
+    response = client.get("/v1/recommendations?item_id=unknown&n=3", headers=AUTH)
 
     assert response.status_code == 200
     assert len(response.json()["items"]) == 3
@@ -143,7 +145,7 @@ def test_files_written_by_training_serve_the_fallback(cold_model, tmp_path):
 
 def test_missing_fallback_file_gives_none(tmp_path):
     settings = Settings(
-        _env_file=None, database_url="unused", core_api_keys="k",
+        _env_file=None, database_url="unused", core_admin_key="unused",
         model_path=str(tmp_path / "current.joblib"),
     )
     assert get_fallback(settings) is None
