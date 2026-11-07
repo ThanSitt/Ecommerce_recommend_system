@@ -15,8 +15,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str
-    # Comma-separated during development; replaced by a stores table later.
-    core_api_keys: str
+    # Lets a connector create stores (POST /v1/stores). Known only to the core and the
+    # connector, never sent to a browser.
+    core_admin_key: str
     # The trained model file the API answers from. Made by core.training.train.
     model_path: str = "models/current.joblib"
 

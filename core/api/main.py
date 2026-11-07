@@ -8,11 +8,12 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from core.api.routes import events, recommendations
+from core.api.routes import events, recommendations, stores
 
 app = FastAPI(title="Recommendation core")
 app.include_router(events.router)
 app.include_router(recommendations.router)
+app.include_router(stores.router)
 
 
 @app.get("/health")

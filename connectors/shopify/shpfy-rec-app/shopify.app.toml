@@ -7,7 +7,9 @@ embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products,write_metaobjects,write_metaobject_definitions,write_app_proxy"
+# write_pixels + read_customer_events: switch on the rec-pixel extension per shop and let
+# it receive customer events (product views, carts, checkouts).
+scopes = "write_products,write_metaobjects,write_metaobject_definitions,write_app_proxy,write_pixels,read_customer_events"
 
 # Storefront widget requests: shop.com/apps/recs/* is forwarded, signed, to /proxy/recs/*.
 # `shopify app dev` replaces the host with the tunnel URL, like application_url.
@@ -81,5 +83,4 @@ api_version = "2026-10"
 redirect_urls = [ "https://example.com/api/auth" ]
 
 [build]
-include_config_on_deploy = true
 automatically_update_urls_on_dev = true

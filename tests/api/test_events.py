@@ -10,12 +10,13 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
+from core.api import auth
 from core.api.main import app
 from core.api.routes import events as events_route
-from core.config import Settings, get_settings
 from core.db.session import get_db
 
 AUTH = {"Authorization": "Bearer test-key"}
+STORE_ID = "st_test"
 
 
 def make_event(**overrides):
@@ -39,9 +40,10 @@ def fake_save(monkeypatch):
 
 
 @pytest.fixture
-def client():
-    app.dependency_overrides[get_settings] = lambda: Settings(
-        _env_file=None, database_url="unused", core_api_keys="test-key"
+def client(monkeypatch):
+    # Stands in for the stores table: only "test-key" belongs to a store.
+    monkeypatch.setattr(
+        auth, "find_store_id", lambda session, key: STORE_ID if key == "test-key" else None
     )
     app.dependency_overrides[get_db] = lambda: MagicMock()
     yield TestClient(app)
@@ -62,7 +64,7 @@ def test_store_comes_from_the_key_not_the_body(client, fake_save):
     client.post("/v1/events", json=[make_event(store_id="someone-else")], headers=AUTH)
 
     _, store_id, saved = fake_save.call_args.args
-    assert store_id == "dev"
+    assert store_id == STORE_ID
     assert not hasattr(saved[0], "store_id")
 
 
