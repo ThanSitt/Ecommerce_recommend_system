@@ -8,9 +8,10 @@ Each model is trained on the training grid, asked for 10 recommendations per sco
 user, and marked against the answer key. Scores are averages over the scored users.
 
 Every model sits two exams. The product page exam tests `similar_items`, what the live
-endpoint serves, so it is the main number for the deployed system. The personal exam tests
-`recommend_for_user`. Their scores cover different users, so they cannot be compared with
-each other; compare models within one exam. See docs/decisions/0004 and 0005.
+endpoint serves, across the whole site, so it is the main number for the deployed system.
+The personal exam tests `recommend_for_user`. Their scores cover different users, so they
+cannot be compared with each other; compare models within one exam. See docs/decisions/0004,
+0005 and 0006.
 
 Only the validation period is ever scored here. The test period stays sealed until the
 final run (Phase 6), so it cannot be opened by accident while tuning.
@@ -64,15 +65,34 @@ class Results:
     fallback_share: float = 0.0
 
 
-def evaluate(model: Recommender, key: AnswerKey, hits: str, k: int = 10) -> Results:
-    """The personal exam: score `recommend_for_user` against an answer key."""
+def evaluate(
+    model: Recommender,
+    key: AnswerKey,
+    hits: str,
+    k: int = 10,
+    fallback: Recommender | None = None,
+) -> Results:
+    """The personal exam: score `recommend_for_user` against an answer key.
+
+    When the model has nothing to recommend to a user, the fallback answers, as in the
+    product page exam. Without a fallback, the ColdStartError is raised.
+    """
     if not key.relevant:
         raise ValueError("the answer key has no users to score")
-    lists = {
-        user: [item for item, _ in model.recommend_for_user(user, n=k)]
-        for user in key.relevant
-    }
-    return _mark(model, PERSONAL, hits, lists, key.relevant, k)
+    lists: dict[str, list[str]] = {}
+    gave_up = 0
+    for user in key.relevant:
+        try:
+            answer = model.recommend_for_user(user, n=k)
+        except ColdStartError:
+            if fallback is None:
+                raise
+            answer = fallback.recommend_for_user(user, n=k)
+            gave_up += 1
+        lists[user] = [item for item, _ in answer]
+    results = _mark(model, PERSONAL, hits, lists, key.relevant, k)
+    results.fallback_share = gave_up / len(lists)
+    return results
 
 
 def evaluate_product_page(
@@ -144,7 +164,8 @@ def run(dataset: str, models: list[str]) -> list[Results]:
     prepared = prepare(dataset)
     grid, validation = prepared.grid, prepared.validation
     page_keys = _with_users(PRODUCT_PAGE, {
-        hits: build_product_page_key(grid, validation, types) for hits, types in HITS.items()
+        hits: build_product_page_key(prepared.train_all, validation, types)
+        for hits, types in HITS.items()
     })
     personal_keys = _with_users(PERSONAL, {
         hits: build_answer_key(grid, validation, types) for hits, types in HITS.items()
@@ -158,7 +179,7 @@ def run(dataset: str, models: list[str]) -> list[Results]:
         for hits, key in page_keys.items():
             results.append(evaluate_product_page(model, fallback, key, hits))
         for hits, key in personal_keys.items():
-            results.append(evaluate(model, key, hits))
+            results.append(evaluate(model, key, hits, fallback=fallback))
     return results
 
 

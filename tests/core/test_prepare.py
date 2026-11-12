@@ -82,11 +82,14 @@ def test_report_and_grid_agree():
     assert prepared.filter_report.users_after == prepared.grid.n_users
     assert prepared.filter_report.items_after == prepared.grid.n_items
     assert len(prepared.grid.events) == prepared.filter_report.events_after
+    # train_all keeps what the filter removed: b's event.
+    assert len(prepared.train_all) == 3
+    assert prepared.filter_report.events_after == 2
 
 
 def test_whole_pipeline_on_the_committed_fixture():
-    # Looser than the Retailrocket settings: the fixture's 739 visitors are too few for
-    # "items need 5 users", which leaves nothing (the small-store problem, Phase 5).
+    # Looser than the Retailrocket settings, which keep only 32 of the fixture's 739 visitors
+    # (the small-store problem, Phase 5).
     events, _ = load_retailrocket(FIXTURE)
     prepared = prepare_events(
         events, RETAILROCKET_VALIDATION_START, RETAILROCKET_TEST_START,

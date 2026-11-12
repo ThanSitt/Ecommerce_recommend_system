@@ -30,10 +30,16 @@ def fake_model():
 
 
 @pytest.fixture
-def client(fake_model, monkeypatch):
+def client(fake_model, monkeypatch, tmp_path):
     # Stands in for the stores table: only "test-key" belongs to a store.
     monkeypatch.setattr(
         auth, "find_store_id", lambda session, key: "st_test" if key == "test-key" else None
+    )
+    # Settings of its own, so no test depends on the local .env or on model files on disk.
+    # Nothing is at this path, so there is no fallback unless a test provides one.
+    app.dependency_overrides[get_settings] = lambda: Settings(
+        _env_file=None, database_url="unused", core_admin_key="unused",
+        model_path=str(tmp_path / "current.joblib"),
     )
     app.dependency_overrides[get_db] = lambda: MagicMock()
     app.dependency_overrides[get_model] = lambda: fake_model
@@ -141,6 +147,32 @@ def test_files_written_by_training_serve_the_fallback(client, cold_model, tmp_pa
     fallback = get_fallback(settings)
     assert fallback.name == "recent"
     assert response.json()["items"] == [item for item, _ in fallback.similar_items("unknown", n=3)]
+
+
+def test_real_item_to_item_files_through_the_real_endpoint(client, tmp_path):
+    # Nothing fake but the stores table: the files training writes, loaded by the API as in
+    # production.
+    trained, path, prepared = train("fixture", "item-to-item", tmp_path / "current.joblib")
+    settings = Settings(
+        _env_file=None, database_url="unused", core_admin_key="unused", model_path=str(path)
+    )
+    app.dependency_overrides[get_settings] = lambda: settings
+    del app.dependency_overrides[get_model]
+
+    known = prepared.grid.item_ids[0]
+    known_response = client.get(f"/v1/recommendations?item_id={known}&n=3", headers=AUTH)
+    unknown_response = client.get("/v1/recommendations?item_id=not-in-the-shop&n=3", headers=AUTH)
+
+    # A product the model knows gets its neighbours.
+    assert known_response.status_code == 200
+    assert known_response.json()["items"] == [
+        item for item, _ in trained.similar_items(known, n=3)
+    ]
+    # One it doesn't know used to be a 500. Now it gets recent best sellers.
+    assert unknown_response.status_code == 200
+    assert unknown_response.json()["items"] == [
+        item for item, _ in get_fallback(settings).similar_items("not-in-the-shop", n=3)
+    ]
 
 
 def test_missing_fallback_file_gives_none(tmp_path):

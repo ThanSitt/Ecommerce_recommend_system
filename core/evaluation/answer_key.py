@@ -5,17 +5,15 @@ independent of any model, so random, most-popular and ALS are compared on identi
 answers. There are two exams, one for each question a model can be asked:
 
   Personal (`recommend_for_user`, docs/decisions/0004): "what will this user touch next?"
-  Product page (`similar_items`, docs/decisions/0005): "this user is on this product's
-  page, what will they touch after it?" The question the live endpoint asks.
+  Scores users and products in the training grid, so its key changes with the filter.
 
-In both, a product counts towards a user's answers only if:
+  Product page (`similar_items`, docs/decisions/0005 and 0006): "this user is on this
+  product's page, what will they touch after it?" The question the live endpoint asks. It
+  uses no history, so it scores users no model has seen, and it covers the whole site,
+  including pages the model cannot answer. Its key comes from the events alone, so it stays
+  the same whatever the filter or model, and scores can be compared across both.
 
-  - the product is in the training grid (otherwise no model knows it),
-  - the user had not touched it in training (no credit for showing someone what they
-    already know).
-
-The personal exam also needs the user to be in the grid. The product page exam does not:
-it uses no history, so it can score users no model has seen.
+In both, a user gets no credit for being shown a product they touched in training.
 
 Users left with no answers are not scored at all: they would score 0 for every model,
 which says nothing about the models.
@@ -94,26 +92,29 @@ def build_answer_key(
 
 
 def build_product_page_key(
-    grid: Interactions,
+    train_all: pd.DataFrame,
     future: pd.DataFrame,
     event_types: tuple[str, ...] = ANY_INTERACTION,
 ) -> ProductPageKey:
     """Build the product page key from `future` events (validation, or test in Phase 6).
 
-    The question is the first product the user viewed that the model knows, once per
-    user, so every user counts the same as in the personal exam. The answers are the
-    known products they first touched after that. A view is the question whichever
+    `train_all` is every training event, before any filtering. No grid is involved, so the
+    key is the same for every filter and every model.
+
+    The question is the first product the user viewed, once per user, so every user counts
+    the same as in the personal exam. It may be a product the model cannot answer: the site
+    has those pages too, and the fallback serves them. A view is the question whichever
     `event_types` is, because a product page visit is a view.
 
-    Retailrocket has no sessions, so "after" can mean days later.
+    The answers are the products they first touched after that, among those seen in training
+    (no setting could recommend a product nobody had touched) and not touched by that user in
+    training. Retailrocket has no sessions, so "after" can mean days later.
     """
-    known_items = future[future["item_id"].isin(grid.item_index)].sort_values(
-        "timestamp", kind="stable"
-    )
-    views = known_items[known_items["event_type"] == "view"]
+    ordered = future.sort_values("timestamp", kind="stable")
+    views = ordered[ordered["event_type"] == "view"]
     first_views = views.drop_duplicates("user_id").set_index("user_id")
 
-    events = known_items[known_items["user_id"].isin(first_views.index)]
+    events = ordered[ordered["user_id"].isin(first_views.index)]
     if events.empty:
         answers: dict[str, frozenset[str]] = {}
     else:
@@ -121,13 +122,14 @@ def build_product_page_key(
         # First touch, not any touch: this rules out the question's own product, and any
         # product the user had already touched before reaching the page.
         first_touch = events.groupby(["user_id", "item_id"])["timestamp"].transform("min")
-        answers = _answers_per_user(
-            events[
-                (first_touch > asked_at)
-                & events["event_type"].isin(event_types)
-                & ~_touched_in_training(grid, events)
-            ]
-        )
+        candidates = events[
+            (first_touch > asked_at)
+            & events["event_type"].isin(event_types)
+            & events["item_id"].isin(train_all["item_id"])
+        ]
+        touched = train_all[["user_id", "item_id"]].drop_duplicates()
+        marked = candidates.merge(touched, on=["user_id", "item_id"], how="left", indicator=True)
+        answers = _answers_per_user(marked[marked["_merge"] == "left_only"])
 
     return ProductPageKey(
         questions={user: first_views.at[user, "item_id"] for user in answers},

@@ -25,6 +25,7 @@ from core.models.baselines import (
     RandomRecommender,
     RecentlyPopularRecommender,
 )
+from core.models.item_to_item import ItemToItemRecommender
 from core.models.loading import fallback_path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -32,6 +33,7 @@ RETAILROCKET = ROOT / "data" / "raw" / "events.csv"
 FIXTURE = ROOT / "tests" / "fixtures" / "events_sample.csv"
 
 MODELS: dict[str, type[Recommender]] = {
+    "item-to-item": ItemToItemRecommender,
     "random": RandomRecommender,
     "popular": MostPopularRecommender,
     "recent": RecentlyPopularRecommender,
@@ -42,7 +44,7 @@ def prepare(dataset: str) -> PreparedData:
     if dataset == "retailrocket":
         return prepare_retailrocket(RETAILROCKET)
     if dataset == "fixture":
-        # Looser filter than Retailrocket: the sample is too small for "items need 5 users".
+        # Looser filter than Retailrocket, whose settings keep only 32 of the 739 visitors here.
         events, _ = load_retailrocket(FIXTURE)
         return prepare_events(
             events, RETAILROCKET_VALIDATION_START, RETAILROCKET_TEST_START,

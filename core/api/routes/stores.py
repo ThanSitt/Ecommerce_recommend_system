@@ -1,6 +1,6 @@
 """POST /v1/stores — register a new store.
 
-Called by a connector when a store installs it (for Shopify: the app's afterAuth hook).
+Called by a connector when a store installs it (from the platform's install hook).
 Guarded by the admin key, which only the core and the connector know; a store's own API
 key cannot create stores.
 

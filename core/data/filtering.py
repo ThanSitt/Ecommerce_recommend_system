@@ -13,14 +13,16 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-# Retailrocket settings; see docs/decisions/0003.
+# Retailrocket settings; see docs/decisions/0003 and 0006.
 # 2 is the smallest useful minimum: a user who touched one item says nothing about which
-# items go together. Items touched by fewer than 5 users have no reliable similarity.
-# Starting choice, to be checked against validation results in Phase 4.
+# items go together. 3 users per item was measured on the product page exam: the model answers
+# 10 more product views per 100 than with 5, scoring at least as well. Going lower adds
+# pages but lowers the score, because rare products have unreliable neighbours.
 RETAILROCKET_MIN_ITEMS_PER_USER = 2
-RETAILROCKET_MIN_USERS_PER_ITEM = 5
+RETAILROCKET_MIN_USERS_PER_ITEM = 3
 # More than 1,000 events in the 110-day training period is ~9 a day, every day: 23 accounts
 # that behave like resellers or bots, not shoppers, yet make 14.5% of all purchases.
+# Item-to-item no longer needs this (0006). Kept until ALS is tested in Phase 4.
 RETAILROCKET_MAX_EVENTS_PER_USER = 1000
 
 
