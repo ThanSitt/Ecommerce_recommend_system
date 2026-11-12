@@ -77,11 +77,38 @@ def test_an_empty_answer_key_cannot_be_scored():
         evaluate(model, key, "any")
 
 
+def test_a_user_the_model_cannot_answer_gets_the_fallback_list():
+    key = build_answer_key(GRID, events_from([("a", "z"), ("c", "y")], "2015-08-25"))
+    model = MagicMock()
+    model.name = "item-to-item"
+    model.metadata.n_items = 3
+
+    def recommend_for_user(user, n):
+        if user == "a":
+            raise ColdStartError(user)
+        return [("x", 1.0)]  # for c: not c's answer, a miss
+
+    model.recommend_for_user.side_effect = recommend_for_user
+
+    results = evaluate(model, key, "any", fallback=popular())
+
+    assert results.fallback_share == pytest.approx(0.5)
+    assert results.recall == pytest.approx(0.5)  # a found z through the fallback; c missed
+
+
+def test_without_a_fallback_a_model_with_no_answer_is_an_error():
+    key = build_answer_key(GRID, events_from([("a", "z")], "2015-08-25"))
+    model = MagicMock()
+    model.recommend_for_user.side_effect = ColdStartError("a")
+    with pytest.raises(ColdStartError):
+        evaluate(model, key, "any")
+
+
 # ---- The product page exam -----------------------------------------------------------
 
 
 # s and t are strangers. s: page x, then touches z. t: page y, then touches x.
-PAGE_KEY = build_product_page_key(GRID, views_at([
+PAGE_KEY = build_product_page_key(GRID.events, views_at([
     ("s", "x", "10:00"), ("s", "z", "11:00"),
     ("t", "y", "10:00"), ("t", "x", "11:00"),
 ]))
@@ -121,8 +148,25 @@ def test_a_page_the_model_cannot_answer_gets_the_fallback_list():
     assert results.recall == pytest.approx(0.5)  # s found z through the fallback; t missed
 
 
+def test_a_brand_new_product_page_counts_as_a_fallback_page():
+    # r's first page is a product no model knows. The whole site is scored, so it still counts.
+    key = build_product_page_key(GRID.events, views_at([
+        ("r", "brand-new", "10:00"), ("r", "x", "11:00"),
+    ]))
+    model = MagicMock()
+    model.name = "item-to-item"
+    model.metadata.n_items = 3
+    model.similar_items.side_effect = ColdStartError("brand-new")
+
+    results = evaluate_product_page(model, popular(), key, "any")
+
+    assert results.users == 1
+    assert results.fallback_share == 1
+    assert results.recall == 1  # most-popular's top product is x, r's answer
+
+
 def test_an_empty_product_page_key_cannot_be_scored():
-    key = build_product_page_key(GRID, views_at([("s", "x", "10:00")]))
+    key = build_product_page_key(GRID.events, views_at([("s", "x", "10:00")]))
     with pytest.raises(ValueError, match="no users"):
         evaluate_product_page(popular(), popular(), key, "any")
 
@@ -136,3 +180,10 @@ def test_command_prints_a_row_per_model_and_exam(capsys):
     assert "| random | personal | any |" in table
     # The fixture is too small for a personal cart-or-purchase key: skipped, with a note.
     assert "skipping personal exam, hits='cart or purchase'" in table
+
+
+def test_command_can_score_item_to_item(capsys):
+    main(["--dataset", "fixture", "--model", "item-to-item"])
+    table = capsys.readouterr().out
+    assert "| item-to-item | product page | any |" in table
+    assert "| item-to-item | personal | any |" in table

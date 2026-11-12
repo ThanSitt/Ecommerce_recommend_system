@@ -1,4 +1,4 @@
-# 0005 — Store registration and API keys
+# 0007 — Store registration and API keys
 
 **Status:** Accepted, 2026-11-04
 **Decided by:** Person B (reviewed by Person A)

@@ -1,7 +1,8 @@
 # 0004 — How models are scored
 
 **Status:** Accepted, 2026-10-27. Extended by 0005, which adds a second exam for what the
-live site serves.
+live site serves. The results below were measured with the original filter; 0006 has the
+current ones.
 **Decided by:** Person A
 **Affects:** `core/evaluation`, every results table in the thesis, and the deployment gate
 

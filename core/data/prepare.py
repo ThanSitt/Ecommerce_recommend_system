@@ -35,6 +35,9 @@ class PreparedData:
 
     # What fit(data) receives.
     grid: Interactions
+    # Every training event, before filtering. The product page exam's answers come from this,
+    # so they stay the same whatever the filter does.
+    train_all: pd.DataFrame
     # Not filtered: users and items the model never saw are the evaluation's problem.
     validation: pd.DataFrame
     # Sealed until Phase 6.
@@ -60,6 +63,7 @@ def prepare_events(
     )
     return PreparedData(
         grid=build_interactions(train_events, weights),
+        train_all=split.train,
         validation=split.validation,
         test=split.test,
         filter_report=report,
@@ -69,11 +73,11 @@ def prepare_events(
 def prepare_retailrocket(
     path: Path | str, weights: dict[str, float] | None = None
 ) -> PreparedData:
-    """The Retailrocket evaluation data, with the settings recorded in
-    docs/decisions/0003. Takes ~40 seconds on the full file, mostly the filter.
+    """The Retailrocket evaluation data, with the settings recorded in docs/decisions/0003
+    and 0006. Takes ~40 seconds on the full file, mostly the filter.
 
-    Needs the full file: on a small sample "items need 5 users" leaves nothing, and
-    building the grid fails. Use prepare_events with looser settings for samples."""
+    Needs the full file: on the committed sample these settings keep only 32 of 739 visitors.
+    Use prepare_events with looser settings for samples."""
     events, duplicates = load_retailrocket(path)
     prepared = prepare_events(
         events,
