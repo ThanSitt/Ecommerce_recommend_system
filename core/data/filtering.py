@@ -20,10 +20,9 @@ import pandas as pd
 # pages but lowers the score, because rare products have unreliable neighbours.
 RETAILROCKET_MIN_ITEMS_PER_USER = 2
 RETAILROCKET_MIN_USERS_PER_ITEM = 3
-# More than 1,000 events in the 110-day training period is ~9 a day, every day: 23 accounts
-# that behave like resellers or bots, not shoppers, yet make 14.5% of all purchases.
-# Item-to-item no longer needs this (0006). Kept until ALS is tested in Phase 4.
-RETAILROCKET_MAX_EVENTS_PER_USER = 1000
+# Retailrocket no longer removes very active accounts (`max_events_per_user`): with BM25
+# item-to-item (0006) and ALS (0008) the score is the same with or without the 1,000-event
+# cap, so the cap was one rule tuned to this dataset with nothing to show for it.
 
 
 @dataclass

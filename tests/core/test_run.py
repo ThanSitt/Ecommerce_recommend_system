@@ -187,3 +187,11 @@ def test_command_can_score_item_to_item(capsys):
     table = capsys.readouterr().out
     assert "| item-to-item | product page | any |" in table
     assert "| item-to-item | personal | any |" in table
+
+
+def test_command_can_score_als_and_bpr(capsys):
+    main(["--dataset", "fixture", "--model", "als", "bpr"])
+    table = capsys.readouterr().out
+    for name in ["als", "bpr"]:
+        assert f"| {name} | product page | any |" in table
+        assert f"| {name} | personal | any |" in table

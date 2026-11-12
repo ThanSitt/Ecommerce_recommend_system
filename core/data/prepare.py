@@ -14,7 +14,6 @@ from pathlib import Path
 import pandas as pd
 
 from core.data.filtering import (
-    RETAILROCKET_MAX_EVENTS_PER_USER,
     RETAILROCKET_MIN_ITEMS_PER_USER,
     RETAILROCKET_MIN_USERS_PER_ITEM,
     FilterReport,
@@ -73,8 +72,8 @@ def prepare_events(
 def prepare_retailrocket(
     path: Path | str, weights: dict[str, float] | None = None
 ) -> PreparedData:
-    """The Retailrocket evaluation data, with the settings recorded in docs/decisions/0003
-    and 0006. Takes ~40 seconds on the full file, mostly the filter.
+    """The Retailrocket evaluation data, with the settings recorded in docs/decisions/0003,
+    0006 and 0008. Takes ~40-60 seconds on the full file, mostly the filter.
 
     Needs the full file: on the committed sample these settings keep only 32 of 739 visitors.
     Use prepare_events with looser settings for samples."""
@@ -85,7 +84,6 @@ def prepare_retailrocket(
         RETAILROCKET_TEST_START,
         min_items_per_user=RETAILROCKET_MIN_ITEMS_PER_USER,
         min_users_per_item=RETAILROCKET_MIN_USERS_PER_ITEM,
-        max_events_per_user=RETAILROCKET_MAX_EVENTS_PER_USER,
         weights=weights,
     )
     prepared.duplicates_dropped = duplicates

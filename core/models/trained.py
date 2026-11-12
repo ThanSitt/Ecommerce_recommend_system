@@ -78,6 +78,12 @@ class TrainedRecommender(Recommender):
     def _top(self, scores: np.ndarray, exclude, n: int) -> list[tuple[str, float]]:
         scores = scores.astype(np.float64)  # a copy, so excluding never changes the model
         scores[exclude] = -np.inf
+        candidates = np.arange(len(scores))
+        if 0 < n < len(scores):
+            # Only the best n need sorting. Everything scoring at least the n-th best score
+            # stays a candidate, ties included, so the answer is the same as sorting all.
+            nth_best = np.partition(scores, len(scores) - n)[len(scores) - n]
+            candidates = np.flatnonzero(scores >= nth_best)
         # Stable sort: ties keep grid order (sorted item ID), so answers never flicker.
-        best = np.argsort(-scores, kind="stable")[:n]
+        best = candidates[np.argsort(-scores[candidates], kind="stable")[:n]]
         return [(self._item_ids[i], float(scores[i])) for i in best if np.isfinite(scores[i])]

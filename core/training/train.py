@@ -27,12 +27,15 @@ from core.models.baselines import (
 )
 from core.models.item_to_item import ItemToItemRecommender
 from core.models.loading import fallback_path
+from core.models.matrix_factorisation import ALSRecommender, BPRRecommender
 
 ROOT = Path(__file__).resolve().parents[2]
 RETAILROCKET = ROOT / "data" / "raw" / "events.csv"
 FIXTURE = ROOT / "tests" / "fixtures" / "events_sample.csv"
 
 MODELS: dict[str, type[Recommender]] = {
+    "als": ALSRecommender,
+    "bpr": BPRRecommender,
     "item-to-item": ItemToItemRecommender,
     "random": RandomRecommender,
     "popular": MostPopularRecommender,

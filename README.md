@@ -98,7 +98,7 @@ late on low-traffic stores.
 | Path                 | Contents                                              |
 | -------------------- | ----------------------------------------------------- |
 | `core/api/`          | FastAPI service: event ingestion, recommendations     |
-| `core/models/`       | Recommendation algorithms (baselines, item-to-item, ALS) |
+| `core/models/`       | Recommendation algorithms (baselines, item-to-item, ALS, BPR) |
 | `core/training/`     | Training pipeline, serialisation, deployment gate     |
 | `core/evaluation/`   | Metrics, time-based splits, baseline comparison       |
 | `core/data/`         | Loaders mapping raw datasets into the event schema    |

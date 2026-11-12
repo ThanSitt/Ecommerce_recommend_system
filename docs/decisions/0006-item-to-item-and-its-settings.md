@@ -1,7 +1,9 @@
 # 0006 — Item-to-item, and the settings it needs
 
 **Status:** Accepted by Person A, 2026-11-05. Changes the minimum users per item from 0003,
-and replaces the product page exam's key from 0005.
+and replaces the product page exam's key from 0005. The heavy-account cap kept here was
+removed in 0008, once ALS was tested; the numbers below are with the cap, as measured then,
+and 0008 has the current ones.
 **Decided by:** Person A
 **Affects:** `core/models`, `core/data`, `core/evaluation`, the deployment gate, and every
 results table in the thesis
@@ -30,7 +32,7 @@ prompted this record:
 | Neighbours kept per product | 50, not tuned, since product pages only show 10 |
 | Minimum users per item | 3 (was 5) |
 | Minimum items per user | 2 (unchanged) |
-| Heavy-account cap | 1,000 (unchanged), to be reviewed once ALS is tested |
+| Heavy-account cap | 1,000 (unchanged), to be reviewed once ALS is tested (removed in 0008) |
 | Product page exam | one fixed key, covering the whole site, that no filter or model can change |
 
 Code: `core/models/item_to_item.py`, `core/models/trained.py` (saving, loading and metadata,
