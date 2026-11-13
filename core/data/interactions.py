@@ -16,8 +16,8 @@ import pandas as pd
 from scipy.sparse import csr_matrix
 
 # How much each event says about interest. A cart is a stronger signal than a view, a
-# purchase stronger than a cart. Starting choice, to be tuned on validation in Phase 4;
-# see docs/decisions/0003.
+# purchase stronger than a cart. See docs/decisions/0003. Tested in 0008: ALS scores the
+# same with every weight 1 on Retailrocket, so these stay, untuned.
 DEFAULT_WEIGHTS = {"view": 1.0, "cart": 3.0, "purchase": 5.0}
 
 

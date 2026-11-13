@@ -2,7 +2,8 @@
 
 **Status:** Accepted, 2026-10-21. The filter thresholds and weights are starting values,
 to be revisited against validation results in Phase 4. 0006 changed the minimum users per item
-to 3. The tables below describe the original settings.
+to 3. 0008 removed the heavy-account cap, and found the weights make no measurable difference
+(they stay). The tables below describe the original settings.
 **Decided by:** Person A
 **Affects:** `core/data`, and every accuracy number reported in the thesis
 
