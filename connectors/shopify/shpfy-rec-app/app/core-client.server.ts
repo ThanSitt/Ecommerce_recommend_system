@@ -16,6 +16,7 @@ const TIMEOUT_MS = 5000;
  * retrying them is a later step.
  */
 export async function sendEvents(
+  shop: string,
   coreApiKey: string,
   events: ContractEvent[],
 ): Promise<boolean> {
@@ -42,9 +43,27 @@ export async function sendEvents(
     console.error(
       `core rejected ${events.length} event(s): ${response.status} ${body}`,
     );
+    if (response.status === 401) logUnknownKey(shop);
     return false;
   }
 
   console.log(`core accepted ${events.length} event(s): ${body}`);
   return true;
+}
+
+/**
+ * The core answered 401 to a shop's key: it has no active store with that key, while the
+ * Shop table says the shop is registered. The two have drifted apart, typically because
+ * the core's database was reset or CORE_API_URL now points at another core.
+ *
+ * Only reported, not repaired: re-registering automatically would give the shop a new,
+ * empty store, and a mistyped CORE_API_URL would then cost every shop its history.
+ */
+export function logUnknownKey(shop: string): void {
+  console.error(
+    `the core does not recognise the key for ${shop}: its store is missing in the core ` +
+      `(core database reset, or CORE_API_URL pointing at another core?). If the store ` +
+      `is really gone, delete this shop's row from the Shop table and reopen the app ` +
+      `to register it again.`,
+  );
 }

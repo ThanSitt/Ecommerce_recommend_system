@@ -79,7 +79,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       JSON.stringify(events, null, 2),
   );
 
-  await sendEvents(registered.coreApiKey, events);
+  await sendEvents(shop, registered.coreApiKey, events);
   return ok();
 };
 

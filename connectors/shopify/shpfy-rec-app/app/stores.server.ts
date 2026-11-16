@@ -5,8 +5,9 @@ import prisma from "./db.server";
 /**
  * Makes sure a shop has a store in the core, and remembers that store's id and key.
  *
- * Called from afterAuth, which runs on install and again on every token renewal, so
- * most calls find the Shop row and stop there.
+ * Called from afterAuth, which runs on install and again on every token renewal, and from
+ * the app's home page on every open, so a failed registration is retried the next time
+ * the merchant opens the app. Most calls find the Shop row and stop there.
  *
  * Never throws: a failure here must not break the merchant's login. Without a Shop row
  * the next afterAuth simply tries again.
