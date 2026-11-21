@@ -1,0 +1,25 @@
+# Reverse proxy: the only service reachable from the internet (ports 80 and 443).
+# Caddy obtains and renews the HTTPS certificate for the domain by itself.
+# DOMAIN and ACME_EMAIL come from infra/docker/.env (via docker-compose.prod.yml).
+
+{
+	# Contact address for the certificate authority's account.
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	# Access log to stdout, readable with `docker compose logs caddy`.
+	log
+
+	# Core service: the public, versioned API any connector calls.
+	@core path /v1/* /health
+	handle @core {
+		reverse_proxy core:8000
+	}
+
+	# Everything else is the Shopify connector: admin app, /pixel, /proxy/recs,
+	# webhooks, auth.
+	handle {
+		reverse_proxy shopify-app:3000
+	}
+}

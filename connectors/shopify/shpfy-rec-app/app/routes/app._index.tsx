@@ -1,10 +1,15 @@
 import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { authenticate } from "../shopify.server";
-import { activatePixel } from "../stores.server";
+import { activatePixel, registerShop } from "../stores.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
+  // Also called from afterAuth, but that runs only when a new access token is obtained.
+  // If registering failed then (e.g. the core was down), this retries on every open
+  // instead of waiting up to an hour for the token to expire. A registered shop costs
+  // one Shop table lookup.
+  await registerShop(session.shop);
   // Switch the pixel on for this shop, or point it at the current app URL.
   await activatePixel(admin);
 

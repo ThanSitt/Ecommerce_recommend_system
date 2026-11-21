@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import prisma from "../db.server";
+import { logUnknownKey } from "../core-client.server";
 import { authenticate } from "../shopify.server";
 
 // GET shop.com/apps/recs?item_id=123 arrives here through the App Proxy.
@@ -36,6 +37,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   });
   if (!response.ok) {
     console.error(`Core API returned ${response.status} for item ${itemId}`);
+    if (response.status === 401) logUnknownKey(registered.shop);
     return Response.json({ items: [] }, { status: 502 });
   }
 

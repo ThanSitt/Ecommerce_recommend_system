@@ -1,0 +1,95 @@
+# Production stack for the single VM. Run from the repo root on the VM:
+#   docker compose -f infra/docker/docker-compose.prod.yml up -d --build
+#
+# Settings come from infra/docker/.env (next to this file; never committed).
+# Start from .env.prod.example. A missing required value stops compose with a message
+# instead of starting with a blank secret.
+#
+# Only caddy publishes ports. core, shopify-app and postgres are reachable only from
+# each other, by service name, on the private network compose creates.
+
+name: recsys
+
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in infra/docker/.env}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in infra/docker/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificates. Kept so a restart does not request new ones from the authority.
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - core
+      - shopify-app
+
+  core:
+    build:
+      context: ../..
+      dockerfile: infra/docker/core.Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://recsys:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in infra/docker/.env}@postgres:5432/recsys
+      CORE_ADMIN_KEY: ${CORE_ADMIN_KEY:?set CORE_ADMIN_KEY in infra/docker/.env}
+      MODEL_PATH: /models/current.joblib
+    volumes:
+      # Model files live on the VM, outside git and outside the image. Read-only: the
+      # service loads the current model, it never writes one.
+      - ${MODELS_DIR:?set MODELS_DIR in infra/docker/.env}:/models:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  shopify-app:
+    build:
+      context: ../../connectors/shopify/shpfy-rec-app
+    restart: unless-stopped
+    environment:
+      SHOPIFY_API_KEY: ${SHOPIFY_API_KEY:?set SHOPIFY_API_KEY in infra/docker/.env}
+      SHOPIFY_API_SECRET: ${SHOPIFY_API_SECRET:?set SHOPIFY_API_SECRET in infra/docker/.env}
+      SCOPES: ${SCOPES:?set SCOPES in infra/docker/.env}
+      SHOPIFY_APP_URL: https://${DOMAIN}
+      CORE_API_URL: http://core:8000
+      CORE_ADMIN_KEY: ${CORE_ADMIN_KEY}
+      # Sessions and each shop's core API key. On a volume, so a rebuild keeps them;
+      # losing this file makes every shop register again under a new store_id.
+      SHOPIFY_DB_URL: file:/data/shopify.sqlite
+    volumes:
+      - shopify_data:/data
+    depends_on:
+      - core
+
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: recsys
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: recsys
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U recsys -d recsys"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+# Named volumes survive `docker compose down` and rebuilds. `down -v` deletes them:
+# all events, all stores, every shop's registration. Never use -v here.
+volumes:
+  pgdata:
+  shopify_data:
+  caddy_data:
+  caddy_config:
