@@ -11,12 +11,15 @@ embedded = true
 # it receive customer events (product views, carts, checkouts).
 scopes = "write_products,write_metaobjects,write_metaobject_definitions,write_app_proxy,write_pixels,read_customer_events"
 
-# Storefront widget requests: shop.com/apps/recs/* is forwarded, signed, to /proxy/recs/*.
+# Storefront widget requests: shop.com/apps/recs-dev/* is forwarded, signed, to /proxy/recs/*.
 # `shopify app dev` replaces the host with the tunnel URL, like application_url.
+# recs-dev, not recs: the prod app (shopify.app.production.toml) owns /apps/recs, and a
+# store can route one proxy path to only one app. Set the dev widget block's
+# "App proxy path" to /apps/recs-dev.
 [app_proxy]
 url = "https://example.com/proxy/recs"
 prefix = "apps"
-subpath = "recs"
+subpath = "recs-dev"
 
 [product.metafields.app.demo_info]
 type = "single_line_text_field"

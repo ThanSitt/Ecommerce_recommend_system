@@ -1,8 +1,14 @@
 {% comment %}
   Product page recommendations. Liquid only draws the empty box with the product ID;
-  recommendations.js fills it in the browser from /apps/recs (our App Proxy).
+  recommendations.js fills it in the browser from the App Proxy path in the settings.
+  The path is a setting because the prod app owns /apps/recs and the dev app
+  /apps/recs-dev: one store routes each path to only one app.
 {% endcomment %}
-<div class="recs-widget" data-item-id="{{ block.settings.product.id }}">
+<div
+  class="recs-widget"
+  data-item-id="{{ block.settings.product.id }}"
+  data-proxy-path="{{ block.settings.proxy_path }}"
+>
   {{ 'recommendations.loading' | t }}
 </div>
 
@@ -12,7 +18,14 @@
   "target": "section",
   "javascript": "recommendations.js",
   "settings": [
-    { "type": "product", "id": "product", "label": "Product", "autofill": true }
+    { "type": "product", "id": "product", "label": "Product", "autofill": true },
+    {
+      "type": "text",
+      "id": "proxy_path",
+      "label": "App proxy path",
+      "default": "/apps/recs",
+      "info": "/apps/recs for the production app, /apps/recs-dev for the development app."
+    }
   ]
 }
 {% endschema %}
