@@ -1,0 +1,90 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+#
+# PRODUCTION app ("Recommender"), served from the Azure VM. Deploy with `npm run deploy:prod`.
+# Development uses shopify.app.toml (a separate app), so `shopify app dev` never touches this one.
+# Keep `scopes` equal to SCOPES in the VM's infra/docker/.env.
+
+client_id = "9b6336a812f6f2a6e5e3c053aa2c1a7a"
+name = "Recommender"
+application_url = "https://ecomrecommender.swedencentral.cloudapp.azure.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+# write_pixels + read_customer_events: switch on the rec-pixel extension per shop and let
+# it receive customer events (product views, carts, checkouts).
+scopes = "write_products,write_metaobjects,write_metaobject_definitions,write_app_proxy,write_pixels,read_customer_events"
+
+# Storefront widget requests: shop.com/apps/recs/* is forwarded, signed, to /proxy/recs/*.
+# `shopify app dev` replaces the host with the tunnel URL, like application_url.
+[app_proxy]
+url = "https://ecomrecommender.swedencentral.cloudapp.azure.com/proxy/recs"
+prefix = "apps"
+subpath = "recs"
+
+[product.metafields.app.demo_info]
+type = "single_line_text_field"
+name = "Demo Source Info"
+description = "Tracks products created by the Shopify app template for development"
+
+  [product.metafields.app.demo_info.access]
+  admin = "merchant_read_write"
+
+[metaobjects.app.example]
+name = "Example"
+description = "An example metaobject definition created by this template"
+
+  [metaobjects.app.example.access]
+  admin = "merchant_read_write"
+
+[metaobjects.app.example.fields.title]
+name = "Title"
+type = "single_line_text_field"
+required = true
+
+[metaobjects.app.example.fields.description]
+name = "Description"
+type = "multi_line_text_field"
+
+[webhooks]
+api_version = "2027-01"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/uninstalled"
+  topics = [ "app/uninstalled" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/scopes_update"
+  topics = [ "app/scopes_update" ]
+
+[events]
+api_version = "2026-10"
+
+  [[events.subscription]]
+  handle = "product-price-change"
+  topic = "Product"
+  actions = [ "update" ]
+  triggers = [ "product.variants.price", "product.variants.compareAtPrice" ]
+  uri = "/webhooks/products/update"
+  query = """
+  query product_variant_price_change($productId: ID!, $variantsId: ID!) {\r
+    product(id: $productId) {\r
+      id\r
+      title\r
+      status\r
+    }\r
+    productVariant(id: $variantsId) {\r
+      id\r
+      title\r
+      price\r
+      compareAtPrice\r
+    }\r
+  }\r
+  """
+  query_filter = "product.status:'ACTIVE'"
+
+[auth]
+redirect_urls = [ "https://ecomrecommender.swedencentral.cloudapp.azure.com/api/auth" ]
+
+[build]
+automatically_update_urls_on_dev = false

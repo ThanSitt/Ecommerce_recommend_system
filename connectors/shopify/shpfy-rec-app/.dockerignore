@@ -1,3 +1,7 @@
 .cache
 build
 node_modules
+# Never bake local secrets or data into an image.
+.env
+prisma/dev.sqlite*
+.shopify

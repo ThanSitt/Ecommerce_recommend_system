@@ -1,0 +1,9 @@
+# Build context for infra/docker/core.Dockerfile (context = repo root).
+# Allowlist: send Docker only what the core image needs. Everything else (.env with the
+# admin key, data/, models/, .venv, connectors/) stays out of the build and the image.
+*
+!requirements.txt
+!infra/docker/core-constraints.txt
+!alembic.ini
+!core/
+**/__pycache__
