@@ -106,6 +106,7 @@ docker compose -f infra/docker/docker-compose.yml up   # full stack locally
 pytest                                                 # tests
 python -m core.training.train --dataset retailrocket   # train
 python -m core.evaluation.run --model als              # evaluate
+python -m core.training.retrain --all                  # retrain every store, behind the gate
 ```
 
 ## Conventions
@@ -113,7 +114,7 @@ python -m core.evaluation.run --model als              # evaluate
 - Write the test with the code, not afterwards. CI runs pytest and blocks deployment on failure.
 - Record architectural decisions in `docs/decisions/` as short notes: what was chosen, what else was considered, why. These become the thesis's justification chapters directly — writing them later from memory wastes time and loses detail.
 - Keep notebooks out of the production path. Explore there, then move anything that works into `core/`.
-- Model files are versioned by training date. The service loads the current one by path; it does not pick versions itself.
+- Model files are versioned by training date, one folder per store: each retraining run keeps its files in `models/<store_id>/runs/<run>/`, and the gate copies an accepted model to `models/<store_id>/current.joblib`. The service loads that by path; it does not pick versions itself (`core/models/loading.py`, `docs/decisions/0009`).
 
 ## Model deployment gate
 

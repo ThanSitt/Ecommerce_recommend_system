@@ -3,7 +3,8 @@
 **Status:** Accepted, 2026-10-21. The filter thresholds and weights are starting values,
 to be revisited against validation results in Phase 4. 0006 changed the minimum users per item
 to 3. 0008 removed the heavy-account cap, and found the weights make no measurable difference
-(they stay). The tables below describe the original settings.
+(they stay). The tables below describe the original settings. 0009 applies the same filter to
+every store, with best sellers served where it leaves too little to train on.
 **Decided by:** Person A
 **Affects:** `core/data`, and every accuracy number reported in the thesis
 

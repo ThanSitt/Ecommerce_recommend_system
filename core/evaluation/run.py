@@ -109,6 +109,18 @@ def evaluate_product_page(
     """
     if not key.relevant:
         raise ValueError("the answer key has no users to score")
+    lists, gave_up = product_page_lists(model, fallback, key, k)
+    results = _mark(model, PRODUCT_PAGE, hits, lists, key.relevant, k)
+    results.fallback_share = sum(key.questions[u] in gave_up for u in lists) / len(lists)
+    return results
+
+
+def product_page_lists(
+    model: Recommender, fallback: Recommender, key: ProductPageKey, k: int = 10
+) -> tuple[dict[str, list[str]], set[str]]:
+    """What each scored user is shown on their product page: the model's list, or the
+    fallback's where the model has no basis to answer. Also returns the pages the fallback
+    answered."""
     # The answer depends only on the product, and many users share a first product.
     pages: dict[str, list[str]] = {}
     gave_up: set[str] = set()
@@ -119,11 +131,7 @@ def evaluate_product_page(
             answer = fallback.similar_items(item, n=k)
             gave_up.add(item)
         pages[item] = [recommended for recommended, _ in answer]
-
-    lists = {user: pages[key.questions[user]] for user in key.relevant}
-    results = _mark(model, PRODUCT_PAGE, hits, lists, key.relevant, k)
-    results.fallback_share = sum(key.questions[u] in gave_up for u in lists) / len(lists)
-    return results
+    return {user: pages[key.questions[user]] for user in key.relevant}, gave_up
 
 
 def _mark(

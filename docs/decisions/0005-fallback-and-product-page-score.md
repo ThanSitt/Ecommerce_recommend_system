@@ -4,7 +4,8 @@
 B owns, so that part is to be confirmed with them. The fallback was first all-time
 most-popular and is now recently popular, for the reason given below. 0006 replaced this exam's
 key with one that covers the whole site and does not depend on the filter. The exam and results
-below describe the first version; 0006 has the current ones.
+below describe the first version; 0006 has the current ones. 0009 makes this exam the
+deployment gate's, and serves a store best sellers alone when no model qualifies.
 **Decided by:** Person A
 **Affects:** `core/api`, `core/training`, `core/evaluation`, the deployment gate, and every
 results table in the thesis. Extends 0004.

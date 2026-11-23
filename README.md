@@ -128,7 +128,18 @@ docker compose -f infra/docker/docker-compose.yml up   # full stack locally
 pytest                                                 # tests
 python -m core.training.train --dataset retailrocket   # train
 python -m core.evaluation.run --model als              # evaluate
+python -m core.training.retrain --all                  # retrain every store, behind the gate
 ```
+
+### Retraining a store
+
+`core.training.retrain` trains a store's model on its events from the database (or from a CSV
+export of the events table, `--events`), holding out the newest week. The deployment gate
+judges the new model on that week; only if it is measurably better than best sellers, and not
+measurably worse than the model the store has now, is it copied to
+`models/<store_id>/current.joblib`, with its fallback beside it. A store without a model that
+qualifies is served best sellers. Every run keeps its files and a `report.json` in
+`models/<store_id>/runs/<run>/`. See [docs/decisions/0009](docs/decisions/0009-retraining-and-deployment-gate.md).
 
 ## Data setup
 

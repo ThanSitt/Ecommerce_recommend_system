@@ -1,6 +1,7 @@
 # 0008 — ALS and BPR, and removing the heavy-account cap
 
 **Status:** Accepted by Person A, 2026-11-13. Removes the heavy-account cap from 0003 and 0006.
+0009 decides which model a store gets: whichever passes the deployment gate.
 **Decided by:** Person A
 **Affects:** `core/models`, `core/data`, every results table in the thesis, and which model the
 site should serve
