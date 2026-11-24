@@ -8,11 +8,19 @@ from core.evaluation.metrics import (
     bootstrap_range,
     catalogue_coverage,
     ndcg_at_k,
+    per_user_metric,
     precision_at_k,
     recall_at_k,
 )
 
 TEN = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]
+
+
+def test_metrics_by_name():
+    assert per_user_metric("ndcg") is ndcg_at_k
+    assert per_user_metric("recall") is recall_at_k
+    with pytest.raises(ValueError, match="unknown metric"):
+        per_user_metric("accuracy")
 
 
 def test_one_hit_out_of_two_answers():

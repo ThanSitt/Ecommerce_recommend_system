@@ -55,6 +55,14 @@ def ndcg_at_k(recommended: Sequence[str], relevant: Set[str], k: int = 10) -> fl
     return found / best
 
 
+def per_user_metric(name: str):
+    """A per-user metric by name: "precision", "recall" or "ndcg"."""
+    metrics = {"precision": precision_at_k, "recall": recall_at_k, "ndcg": ndcg_at_k}
+    if name not in metrics:
+        raise ValueError(f"unknown metric {name!r}; choose from {sorted(metrics)}")
+    return metrics[name]
+
+
 def catalogue_coverage(recommendations: Iterable[Sequence[str]], n_items: int) -> float:
     """Different products recommended to anyone, divided by the catalogue size.
 

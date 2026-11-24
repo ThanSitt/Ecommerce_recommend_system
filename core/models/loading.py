@@ -1,11 +1,18 @@
-"""Load any saved model without knowing which algorithm it is.
+"""Load any saved model without knowing which algorithm it is, and where each store's is.
 
-The API reads whatever file MODEL_PATH points to; the file itself records which class it
+The API reads whatever file it is pointed at; the file itself records which class it
 holds, so the service never needs to know whether it is serving most-popular or ALS.
+
+Each store has its own folder of models (docs/decisions/0009):
+
+    <models dir>/<store_id>/current.joblib      what the API serves for this store
+    <models dir>/<store_id>/fallback.joblib     its fallback
+    <models dir>/<store_id>/runs/<run>/...      every retraining run, kept or not, and why
 """
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import joblib
@@ -13,6 +20,23 @@ import joblib
 from core.models.base import Recommender
 
 FALLBACK_FILENAME = "fallback.joblib"
+CURRENT_FILENAME = "current.joblib"
+# Store IDs are made by the core (`st_` + hex), but a folder name is built from them, so
+# anything that could climb out of the models folder ("..", "/") is refused.
+_STORE_ID = re.compile(r"[A-Za-z0-9_-]+")
+
+
+def store_dir(models_dir: Path | str, store_id: str) -> Path:
+    """A store's model folder."""
+    if not _STORE_ID.fullmatch(store_id):
+        raise ValueError(f"not a valid store_id for a folder name: {store_id!r}")
+    return Path(models_dir) / store_id
+
+
+def current_model_path(models_dir: Path | str, store_id: str) -> Path:
+    """The model the API serves for a store. Only the retraining pipeline replaces it, and
+    only when the deployment gate accepts a new model. Its fallback is beside it."""
+    return store_dir(models_dir, store_id) / CURRENT_FILENAME
 
 
 def fallback_path(model_path: Path | str) -> Path:
